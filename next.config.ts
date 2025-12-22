@@ -50,13 +50,25 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
     const laboUrl = process.env.NEXT_PUBLIC_LABO_URL;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
     const adminHost = adminUrl ? new URL(adminUrl).hostname : "admin.kioskfy.com";
     const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
+    const appHost = appUrl ? new URL(appUrl).hostname : "app.kioskfy.com";
 
     return [
       {
         source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: appHost,
+          },
+        ],
+        destination: "/:path*",
+      },
+      {
+        source: "/admin/:path*",
         has: [
           {
             type: "host",
@@ -66,7 +78,7 @@ const nextConfig: NextConfig = {
         destination: "/admin/:path*",
       },
       {
-        source: "/:path*",
+        source: "/organization/:path*",
         has: [
           {
             type: "host",
@@ -84,10 +96,20 @@ const nextConfig: NextConfig = {
             value: "localhost",
           },
         ],
+        destination: "/:path*",
+      },
+      {
+        source: "/admin/:path*",
+        has: [
+          {
+            type: "host",
+            value: "localhost",
+          },
+        ],
         destination: "/admin/:path*",
       },
       {
-        source: "/:path*",
+        source: "/organization/:path*",
         has: [
           {
             type: "host",

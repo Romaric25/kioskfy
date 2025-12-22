@@ -2,6 +2,13 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
+const laboUrl = process.env.NEXT_PUBLIC_LABO_URL;
+const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+const adminHost = adminUrl ? new URL(adminUrl).hostname : "admin.kioskfy.com";
+const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
+const appHost = appUrl ? new URL(appUrl).hostname : "app.kioskfy.com";
 
 export default async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
@@ -87,6 +94,24 @@ export default async function proxy(request: NextRequest) {
     if (isProtectedRoute) {
         // Pas connecté -> redirection login
         if (!session) {
+            // Si on est déjà sur une page de login, on laisse passer pour éviter la boucle
+            if (pathname.includes("/login")) {
+                return NextResponse.next();
+            }
+
+            // Eviter la boucle: ne pas rediriger si on est déjà sur la page de login admin
+            if (pathname.startsWith("/admin") || hostname === adminHost) {
+                const loginUrl = new URL(`/admin/login`, request.url);
+                loginUrl.searchParams.set("redirect", pathname);
+                return NextResponse.redirect(loginUrl);
+            }
+            // Eviter la boucle: ne pas rediriger si on est déjà sur la page de login organization
+            if (pathname.startsWith("/organization") || hostname === laboHost) {
+                const loginUrl = new URL(`/organization/login`, request.url);
+                loginUrl.searchParams.set("redirect", pathname);
+                return NextResponse.redirect(loginUrl);
+            }
+
             const loginUrl = new URL(`/login`, request.url);
             loginUrl.searchParams.set("redirect", pathname);
             return NextResponse.redirect(loginUrl);

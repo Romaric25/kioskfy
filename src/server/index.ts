@@ -11,6 +11,9 @@ import { uploadsService } from './services/uploads.service';
 import { organizationsService } from './services/organizations.service';
 import { usersService } from './services/users.service';
 import { serverTiming } from '@elysiajs/server-timing'
+
+const isProduction = process.env.NODE_ENV === 'production';
+
 const app = new Elysia({ prefix: '/api/v1' })
     .use(serverTiming())
     // Configure CORS for auth requests
@@ -25,7 +28,7 @@ const app = new Elysia({ prefix: '/api/v1' })
             allowedHeaders: ['Content-Type', 'Authorization'],
         })
     )
-    // OpenAPI documentation with Better Auth integration
+    // OpenAPI documentation - disabled in production via guard
     .use(
         openapi({
             references: fromTypes(),
@@ -56,6 +59,13 @@ const app = new Elysia({ prefix: '/api/v1' })
     .use(uploadsService)
     .use(organizationsService)
     .use(usersService)
+    // Block /docs access in production
+    .onBeforeHandle(({ request, set }) => {
+        if (isProduction && request.url.includes('/api/v1/docs')) {
+            set.status = 404;
+            return { error: 'Not Found' };
+        }
+    })
 
 export default app;
 export type App = typeof app;

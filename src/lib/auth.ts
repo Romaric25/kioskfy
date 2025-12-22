@@ -18,9 +18,9 @@ export const auth = betterAuth({
     baseURL: isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
     basePath: '/api/auth',
     trustedOrigins: [
-        isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
-        isProduction ? (process.env.NEXT_PUBLIC_ADMIN_URL ?? "http://localhost:3000") : "http://localhost:3000",
-        isProduction ? (process.env.NEXT_PUBLIC_LABO_URL ?? "http://localhost:3000") : "http://localhost:3000",
+        "http://localhost:3000",
+        "*.kioskfy.com",          
+        "https://*.kioskfy.com", 
     ],
     database: drizzleAdapter(db, {
         provider: "mysql",

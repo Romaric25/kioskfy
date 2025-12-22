@@ -57,6 +57,7 @@ const nextConfig: NextConfig = {
     const appHost = appUrl ? new URL(appUrl).hostname : "app.kioskfy.com";
 
     return [
+      // App / Public
       {
         source: "/:path*",
         has: [
@@ -67,8 +68,9 @@ const nextConfig: NextConfig = {
         ],
         destination: "/:path*",
       },
+      // Admin Subdomain
       {
-        source: "/admin/:path*",
+        source: "/:path*",
         has: [
           {
             type: "host",
@@ -77,8 +79,9 @@ const nextConfig: NextConfig = {
         ],
         destination: "/admin/:path*",
       },
+      // Labo Subdomain
       {
-        source: "/organization/:path*",
+        source: "/:path*",
         has: [
           {
             type: "host",
@@ -87,35 +90,15 @@ const nextConfig: NextConfig = {
         ],
         destination: "/organization/:path*",
       },
-      // Localhost fallback/dev support
+      // Localhost Fallbacks (optional but good for consistency)
       {
         source: "/:path*",
-        has: [
-          {
-            type: "host",
-            value: "localhost",
-          },
-        ],
-        destination: "/:path*",
-      },
-      {
-        source: "/admin/:path*",
-        has: [
-          {
-            type: "host",
-            value: "localhost",
-          },
-        ],
+        has: [{ type: "host", value: "admin.localhost" }],
         destination: "/admin/:path*",
       },
       {
-        source: "/organization/:path*",
-        has: [
-          {
-            type: "host",
-            value: "localhost",
-          },
-        ],
+        source: "/:path*",
+        has: [{ type: "host", value: "labo.localhost" }],
         destination: "/organization/:path*",
       },
     ];
@@ -136,7 +119,7 @@ const nextConfig: NextConfig = {
             value: adminHost,
           },
         ],
-        destination: "/admin/login",
+        destination: "/login",
         permanent: false,
       },
       {
@@ -147,7 +130,7 @@ const nextConfig: NextConfig = {
             value: laboHost,
           },
         ],
-        destination: "/organization/login",
+        destination: "/login",
         permanent: false,
       },
     ];

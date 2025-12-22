@@ -10,8 +10,10 @@ import { auth } from "./auth";
 
 const isProduction = process.env.NODE_ENV === 'production';
 // Better Auth client
+// En production, on ne définit pas de baseURL pour que les requêtes
+// soient relatives au domaine actuel (évite les erreurs CORS entre sous-domaines)
 export const authClient = createAuthClient({
-    baseURL: isProduction ? process.env.NEXT_PUBLIC_APP_URL : "http://localhost:3000",
+    baseURL: isProduction ? undefined : "http://localhost:3000",
     basePath: '/api/auth',
     session: {
         modelName: "sessions",

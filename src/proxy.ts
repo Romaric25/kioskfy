@@ -30,10 +30,6 @@ export default async function proxy(request: NextRequest) {
         });
     }
 
-    // Permettre les requêtes OPTIONS pour CORS (Preflight)
-    if (request.method === 'OPTIONS') {
-        return NextResponse.next();
-    }
 
     // Ignorer les fichiers statiques, API, et images s'ils passent le matcher
     if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/static') || pathname.includes('.')) {

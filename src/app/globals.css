@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Force Tailwind v4 to include dynamic category colors */
+@source inline("
+ bg-blue-100 bg-blue-900/30 text-blue-600 text-blue-400 group-hover:border-blue-200 group-hover:border-blue-800 group-hover:shadow-blue-200/50 group-hover:shadow-blue-900/10 group-hover:from-blue-500/10 bg-blue-600 bg-blue-400 bg-emerald-100 bg-emerald-900/30 text-emerald-600 text-emerald-400 group-hover:border-emerald-200 group-hover:border-emerald-800 group-hover:shadow-emerald-200/50 group-hover:shadow-emerald-900/10 group-hover:from-emerald-500/10 bg-emerald-600 bg-emerald-400 bg-orange-100 bg-orange-900/30 text-orange-600 text-orange-400 group-hover:border-orange-200 group-hover:border-orange-800 group-hover:shadow-orange-200/50 group-hover:shadow-orange-900/10 group-hover:from-orange-500/10 bg-orange-600 bg-orange-400 bg-purple-100 bg-purple-900/30 text-purple-600 text-purple-400 group-hover:border-purple-200 group-hover:border-purple-800 group-hover:shadow-purple-200/50 group-hover:shadow-purple-900/10 group-hover:from-purple-500/10 bg-purple-600 bg-purple-400 bg-cyan-100 bg-cyan-900/30 text-cyan-600 text-cyan-400 group-hover:border-cyan-200 group-hover:border-cyan-800 group-hover:shadow-cyan-200/50 group-hover:shadow-cyan-900/10 group-hover:from-cyan-500/10 bg-cyan-600 bg-cyan-400 bg-rose-100 bg-rose-900/30 text-rose-600 text-rose-400 group-hover:border-rose-200 group-hover:border-rose-800 group-hover:shadow-rose-200/50 group-hover:shadow-rose-900/10 group-hover:from-rose-500/10 bg-rose-600 bg-rose-400 bg-pink-100 bg-pink-900/30 text-pink-600 text-pink-400 group-hover:border-pink-200 group-hover:border-pink-800 group-hover:shadow-pink-200/50 group-hover:shadow-pink-900/10 group-hover:from-pink-500/10 bg-pink-600 bg-pink-400 bg-sky-100 bg-sky-900/30 text-sky-600 text-sky-400 group-hover:border-sky-200 group-hover:border-sky-800 group-hover:shadow-sky-200/50 group-hover:shadow-sky-900/10 group-hover:from-sky-500/10 bg-sky-600 bg-sky-400 dark:bg-blue-900/30 dark:text-blue-400 dark:group-hover:border-blue-800 dark:group-hover:shadow-blue-900/10 dark:bg-emerald-900/30 dark:text-emerald-400 dark:group-hover:border-emerald-800 dark:group-hover:shadow-emerald-900/10 dark:bg-orange-900/30 dark:text-orange-400 dark:group-hover:border-orange-800 dark:group-hover:shadow-orange-900/10 dark:bg-purple-900/30 dark:text-purple-400 dark:group-hover:border-purple-800 dark:group-hover:shadow-purple-900/10 dark:bg-cyan-900/30 dark:text-cyan-400 dark:group-hover:border-cyan-800 dark:group-hover:shadow-cyan-900/10 dark:bg-rose-900/30 dark:text-rose-400 dark:group-hover:border-rose-800 dark:group-hover:shadow-rose-900/10 dark:bg-pink-900/30 dark:text-pink-400 dark:group-hover:border-pink-800 dark:group-hover:shadow-pink-900/10 dark:bg-sky-900/30 dark:text-sky-400 dark:group-hover:border-sky-800 dark:group-hover:shadow-sky-900/10 ");
+
+  @custom-variant dark (&:is(.dark *));
+
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    /* Bogey Green Base: #157023 */
+    --primary: oklch(0.42 0.12 145);
+    --primary-foreground: oklch(0.98 0 0);
+    /* Bogey Green 90% light: #e8f1e9 */
+    --secondary: oklch(0.94 0.02 145);
+    --secondary-foreground: oklch(0.205 0 0);
+    /* Bogey Green 80% light: #d0e2d3 */
+    --muted: oklch(0.88 0.03 145);
+    --muted-foreground: oklch(0.45 0.08 145);
+    /* Bogey Green 70% light: #b9d4bd */
+    --accent: oklch(0.82 0.05 145);
+    --accent-foreground: oklch(0.25 0.08 145);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    /* Bogey Green 80% light: #d0e2d3 */
+    --border: oklch(0.88 0.03 145);
+    --input: oklch(0.88 0.03 145);
+    /* Bogey Green 40% light: #73a97b */
+    --ring: oklch(0.65 0.08 145);
+    /* Chart colors using Bogey Green variations */
+    --chart-1: oklch(0.42 0.12 145);
+    --chart-2: oklch(0.52 0.10 145);
+    --chart-3: oklch(0.62 0.08 145);
+    --chart-4: oklch(0.72 0.06 145);
+    --chart-5: oklch(0.82 0.04 145);
+    --radius: 0.625rem;
+    /* Bogey Green 90% light: #e8f1e9 */
+    --sidebar: oklch(0.94 0.02 145);
+    --sidebar-foreground: oklch(0.145 0 0);
+    /* Bogey Green Base: #157023 */
+    --sidebar-primary: oklch(0.42 0.12 145);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    /* Bogey Green 80% light: #d0e2d3 */
+    --sidebar-accent: oklch(0.88 0.03 145);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.88 0.03 145);
+    --sidebar-ring: oklch(0.65 0.08 145);
+  }
+
+  .dark {
+    /* Dark base: #1d2329 */
+    --background: oklch(0.19 0.01 240);
+    --foreground: oklch(0.985 0 0);
+    /* Slightly lighter for cards: #242a31 */
+    --card: oklch(0.22 0.01 240);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.22 0.01 240);
+    --popover-foreground: oklch(0.985 0 0);
+    /* Bogey Green 50% light: #8ab891 - brighter for dark mode */
+    --primary: oklch(0.70 0.10 145);
+    --primary-foreground: oklch(0.19 0.01 240);
+    /* Darker variation: #2a3138 */
+    --secondary: oklch(0.25 0.01 240);
+    --secondary-foreground: oklch(0.985 0 0);
+    /* Muted: #323a42 */
+    --muted: oklch(0.28 0.01 240);
+    --muted-foreground: oklch(0.65 0 0);
+    /* Accent: #3a424a */
+    --accent: oklch(0.32 0.01 240);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    /* Border: #3a424a */
+    --border: oklch(0.32 0.01 240);
+    --input: oklch(0.32 0.01 240);
+    /* Bogey Green 40% light: #73a97b */
+    --ring: oklch(0.65 0.08 145);
+    /* Chart colors using Bogey Green variations for dark mode */
+    --chart-1: oklch(0.70 0.10 145);
+    --chart-2: oklch(0.60 0.09 145);
+    --chart-3: oklch(0.50 0.08 145);
+    --chart-4: oklch(0.80 0.06 145);
+    --chart-5: oklch(0.45 0.10 145);
+    /* Sidebar: #1d2329 */
+    --sidebar: oklch(0.19 0.01 240);
+    --sidebar-foreground: oklch(0.985 0 0);
+    /* Bogey Green 50% light: #8ab891 */
+    --sidebar-primary: oklch(0.70 0.10 145);
+    --sidebar-primary-foreground: oklch(0.19 0.01 240);
+    /* Sidebar accent: #2a3138 */
+    --sidebar-accent: oklch(0.25 0.01 240);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(0.32 0.01 240);
+    --sidebar-ring: oklch(0.55 0.08 145);
+  }
+
+  @theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+  }
+
+  @layer base {
+    * {
+      @apply border-border outline-ring/50;
+    }
+
+    body {
+      @apply bg-background text-foreground;
+    }
+  }

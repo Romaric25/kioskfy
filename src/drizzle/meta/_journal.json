@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1766174003008,
+      "tag": "0000_orange_infant_terrible",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1766174688376,
+      "tag": "0001_windy_peter_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1766266392203,
+      "tag": "0002_melted_obadiah_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1766271614893,
+      "tag": "0003_productive_violations",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1766271846411,
+      "tag": "0004_low_sentinel",
+      "breakpoints": true
+    }
+  ]
+}

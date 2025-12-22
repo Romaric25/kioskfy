@@ -120,6 +120,38 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
+    const laboUrl = process.env.NEXT_PUBLIC_LABO_URL;
+
+    const adminHost = adminUrl ? new URL(adminUrl).hostname : "admin.kioskfy.com";
+    const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
+
+    return [
+      {
+        source: "/",
+        has: [
+          {
+            type: "host",
+            value: adminHost,
+          },
+        ],
+        destination: "/admin/login",
+        permanent: false,
+      },
+      {
+        source: "/",
+        has: [
+          {
+            type: "host",
+            value: laboHost,
+          },
+        ],
+        destination: "/organization/login",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin();

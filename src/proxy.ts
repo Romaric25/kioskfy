@@ -45,23 +45,11 @@ export default async function proxy(request: NextRequest) {
     }
     // Pour admin subdomain
     else if (subdomain === 'admin') {
-        // Si l'utilisateur tente d'accéder avec le préfixe /admin, on le redirige proprement
-        if (pathname.startsWith('/admin')) {
-            url.pathname = pathname.replace('/admin', '') || '/';
-            return NextResponse.redirect(url);
-        }
-        url.pathname = `/admin${pathname}`;
-        return NextResponse.rewrite(url);
+        // Laisser Next.js gérer via rewrites dans next.config.ts
     }
     // Pour labo subdomain
     else if (subdomain === 'labo') {
-        // Si l'utilisateur tente d'accéder avec le préfixe /organization, on le redirige proprement
-        if (pathname.startsWith('/organization')) {
-            url.pathname = pathname.replace('/organization', '') || '/';
-            return NextResponse.redirect(url);
-        }
-        url.pathname = `/organization${pathname}`;
-        return NextResponse.rewrite(url);
+        // Laisser Next.js gérer via rewrites dans next.config.ts
     }
     // Pour les tenants (agences)
     else {
@@ -100,10 +88,15 @@ export default async function proxy(request: NextRequest) {
     const isOrganizationDashboard = pathname.includes("/organization/dashboard");
 
     if (isPublicRoute && session && isClient && !hasError && !isDashboard) {
+        // Client redirigé vers son dashboard
         return NextResponse.redirect(new URL(`/dashboard`, request.url));
     }
 
     if (isPublicRoute && session && isAgency && !hasError && !isOrganizationDashboard) {
+        // Agence redirigée vers son dashboard
+        if (subdomain === 'labo') {
+            return NextResponse.redirect(new URL(`/dashboard`, request.url));
+        }
         return NextResponse.redirect(new URL(`/organization/dashboard`, request.url));
     }
 

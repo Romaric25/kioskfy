@@ -47,6 +47,57 @@ const nextConfig: NextConfig = {
 
     formats: ["image/webp"],
   },
+  async rewrites() {
+    const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
+    const laboUrl = process.env.NEXT_PUBLIC_LABO_URL;
+
+    const adminHost = adminUrl ? new URL(adminUrl).hostname : "admin.kioskfy.com";
+    const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
+
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: adminHost,
+          },
+        ],
+        destination: "/admin/:path*",
+      },
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: laboHost,
+          },
+        ],
+        destination: "/organization/:path*",
+      },
+      // Localhost fallback/dev support
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "localhost",
+          },
+        ],
+        destination: "/admin/:path*",
+      },
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "localhost",
+          },
+        ],
+        destination: "/organization/:path*",
+      },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin();

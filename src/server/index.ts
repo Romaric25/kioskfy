@@ -16,7 +16,10 @@ const app = new Elysia({ prefix: '/api/v1' })
     // Configure CORS for auth requests
     .use(
         cors({
-            origin: true,
+            origin: [
+                /.*\.kioskfy\.com$/,
+                /.*\.localhost$/,
+            ],
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             credentials: true,
             allowedHeaders: ['Content-Type', 'Authorization'],

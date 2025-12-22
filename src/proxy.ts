@@ -45,11 +45,21 @@ export default async function proxy(request: NextRequest) {
     }
     // Pour admin subdomain
     else if (subdomain === 'admin') {
+        // Si l'utilisateur tente d'accéder avec le préfixe /admin, on le redirige proprement
+        if (pathname.startsWith('/admin')) {
+            url.pathname = pathname.replace('/admin', '') || '/';
+            return NextResponse.redirect(url);
+        }
         url.pathname = `/admin${pathname}`;
         return NextResponse.rewrite(url);
     }
     // Pour labo subdomain
     else if (subdomain === 'labo') {
+        // Si l'utilisateur tente d'accéder avec le préfixe /organization, on le redirige proprement
+        if (pathname.startsWith('/organization')) {
+            url.pathname = pathname.replace('/organization', '') || '/';
+            return NextResponse.redirect(url);
+        }
         url.pathname = `/organization${pathname}`;
         return NextResponse.rewrite(url);
     }

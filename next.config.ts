@@ -68,7 +68,18 @@ const nextConfig: NextConfig = {
         ],
         destination: "/:path*",
       },
-      // Admin Subdomain
+      // Admin Subdomain - Specific rule for /admin paths (prevent double prefix)
+      {
+        source: "/admin/:path*",
+        has: [
+          {
+            type: "host",
+            value: adminHost,
+          },
+        ],
+        destination: "/admin/:path*",
+      },
+      // Admin Subdomain - Generic rule for other paths
       {
         source: "/:path*",
         has: [
@@ -79,7 +90,18 @@ const nextConfig: NextConfig = {
         ],
         destination: "/admin/:path*",
       },
-      // Labo Subdomain
+      // Labo Subdomain - Specific rule for /organization paths (prevent double prefix)
+      {
+        source: "/organization/:path*",
+        has: [
+          {
+            type: "host",
+            value: laboHost,
+          },
+        ],
+        destination: "/organization/:path*",
+      },
+      // Labo Subdomain - Generic rule for other paths
       {
         source: "/:path*",
         has: [
@@ -90,11 +112,21 @@ const nextConfig: NextConfig = {
         ],
         destination: "/organization/:path*",
       },
-      // Localhost Fallbacks (optional but good for consistency)
+      // Localhost Fallbacks
+      {
+        source: "/admin/:path*",
+        has: [{ type: "host", value: "admin.localhost" }],
+        destination: "/admin/:path*",
+      },
       {
         source: "/:path*",
         has: [{ type: "host", value: "admin.localhost" }],
         destination: "/admin/:path*",
+      },
+      {
+        source: "/organization/:path*",
+        has: [{ type: "host", value: "labo.localhost" }],
+        destination: "/organization/:path*",
       },
       {
         source: "/:path*",
@@ -119,7 +151,7 @@ const nextConfig: NextConfig = {
             value: adminHost,
           },
         ],
-        destination: "/login",
+        destination: "/admin/login",
         permanent: false,
       },
       {
@@ -130,7 +162,7 @@ const nextConfig: NextConfig = {
             value: laboHost,
           },
         ],
-        destination: "/login",
+        destination: "/organization/login",
         permanent: false,
       },
     ];

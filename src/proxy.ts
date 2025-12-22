@@ -19,6 +19,15 @@ export default async function proxy(request: NextRequest) {
 
     const subdomain = hasSubdomain ? parts[0] : null;
 
+    // Block /api/v1/docs in production
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction && pathname.startsWith('/api/v1/docs')) {
+        return new NextResponse(JSON.stringify({ error: 'Not Found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
+
     // Ignorer les fichiers statiques, API, et images s'ils passent le matcher
     if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/static') || pathname.includes('.')) {
         return NextResponse.next();

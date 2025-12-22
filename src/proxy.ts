@@ -1,46 +1,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { rootDomain } from '@/lib/utils';
 
-function extractSubdomain(request: NextRequest): string | null {
-    const url = request.url;
-    const host = request.headers.get('host') || '';
-    const hostname = host.split(':')[0];
-
-    // Local development environment
-    if (url.includes('localhost') || url.includes('127.0.0.1')) {
-        // Try to extract subdomain from the full URL
-        const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
-        if (fullUrlMatch && fullUrlMatch[1]) {
-            return fullUrlMatch[1];
-        }
-
-        // Fallback to host header approach
-        if (hostname.includes('.localhost')) {
-            return hostname.split('.')[0];
-        }
-
-        return null;
-    }
-
-    // Production environment
-    const rootDomainFormatted = rootDomain.split(':')[0];
-
-    // Handle preview deployment URLs (tenant---branch-name.kioskyfy.com)
-    if (hostname.includes('---') && hostname.endsWith('.kioskyfy.com')) {
-        const parts = hostname.split('---');
-        return parts.length > 0 ? parts[0] : null;
-    }
-
-    // Regular subdomain detection
-    const isSubdomain =
-        hostname !== rootDomainFormatted &&
-        hostname !== `www.${rootDomainFormatted}` &&
-        hostname.endsWith(`.${rootDomainFormatted}`);
-
-    return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, '') : null;
-}
 
 export default async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
@@ -53,6 +14,7 @@ export default async function proxy(request: NextRequest) {
 
     // Si c'est localhost ou un domaine simple (pas de subdomain)
     const isLocalhost = hostnameWithoutPort === 'localhost' || hostnameWithoutPort === '127.0.0.1';
+    const isVercel = hostname.includes('vercel.app');
     const hasSubdomain = parts.length >= 3 || (parts.length === 2 && !['com', 'fr', 'org', 'net', 'io'].includes(parts[1]));
 
     const subdomain = hasSubdomain ? parts[0] : null;
@@ -69,7 +31,7 @@ export default async function proxy(request: NextRequest) {
     }
 
     // Si c'est localhost ou pas de subdomain, continuer avec la logique normale
-    if (isLocalhost || !subdomain || subdomain === 'www') {
+    if (isLocalhost || !subdomain || subdomain === 'www' || isVercel) {
         // Continuer vers la logique d'authentification ci-dessous
     }
     // Pour admin subdomain

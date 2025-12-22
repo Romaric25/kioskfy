@@ -35,7 +35,36 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Routes d'authentification partagées
+    // ============================================
+    // Redirections pour les sous-domaines admin et labo
+    // Sur labo.kioskfy.com : toutes les routes qui ne commencent pas par /organization -> /organization/dashboard
+    // Sur admin.kioskfy.com : toutes les routes qui ne commencent pas par /admin -> /admin/dashboard
+    // ============================================
+
+    // Routes autorisées sur le sous-domaine labo (commencent par /organization)
+    const laboAllowedPrefixes = ['/organization'];
+    // Routes autorisées sur le sous-domaine admin (commencent par /admin)
+    const adminAllowedPrefixes = ['/admin'];
+
+    // Détection du sous-domaine labo
+    if (hostnameWithoutPort === laboHost || subdomain === 'labo') {
+        const isAllowedOnLabo = laboAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
+        if (!isAllowedOnLabo && pathname !== '/') {
+            // Rediriger vers /organization/dashboard
+            return NextResponse.redirect(new URL('/organization/dashboard', request.url));
+        }
+    }
+
+    // Détection du sous-domaine admin
+    if (hostnameWithoutPort === adminHost || subdomain === 'admin') {
+        const isAllowedOnAdmin = adminAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
+        if (!isAllowedOnAdmin && pathname !== '/') {
+            // Rediriger vers /admin/dashboard
+            return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+        }
+    }
+
+    // Routes d'authentification partagées (seulement pour le domaine principal)
     const sharedAuthRoutes = ['/login', '/register', '/forgot-password'];
     if (sharedAuthRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.next();

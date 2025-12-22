@@ -60,7 +60,7 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1 p-1 bg-muted/30 rounded-full border border-border/40 backdrop-blur-sm">
               <Button variant="ghost" className="rounded-full gap-2 h-9 px-4 text-muted-foreground hover:text-foreground hover:bg-background shadow-none hover:shadow-sm transition-all" asChild>
-                <Link href="/journaux">
+                <Link href="/newspapers">
                   <Newspaper className="h-4 w-4" />
                   Journaux
                 </Link>

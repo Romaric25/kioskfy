@@ -15,8 +15,13 @@ import VerificationClientEmail from "@/emails/VerificationClientEmail";
 
 const isProduction = process.env.NODE_ENV === 'production';
 export const auth = betterAuth({
-    baseURL: isProduction ? process.env.NEXT_PUBLIC_APP_URL : "http://localhost:3000",
+    baseURL: isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
     basePath: '/api/auth',
+    trustedOrigins: [
+        isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
+        isProduction ? (process.env.NEXT_PUBLIC_ADMIN_URL ?? "http://localhost:3000") : "http://localhost:3000",
+        isProduction ? (process.env.NEXT_PUBLIC_LABO_URL ?? "http://localhost:3000") : "http://localhost:3000",
+    ],
     database: drizzleAdapter(db, {
         provider: "mysql",
     }),

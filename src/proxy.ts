@@ -8,15 +8,10 @@ export default async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     const hostname = request.headers.get('host') || 'localhost:3000';
 
-    // Extraire le subdomain correctement (ignorer le port)
     const hostnameWithoutPort = hostname.split(':')[0];
     const parts = hostnameWithoutPort.split('.');
-
-    // Si c'est localhost ou un domaine simple (pas de subdomain)
-    const isLocalhost = hostnameWithoutPort === 'localhost' || hostnameWithoutPort === '127.0.0.1';
     const isVercel = hostname.includes('vercel.app');
     const hasSubdomain = parts.length >= 3 || (parts.length === 2 && !['com', 'fr', 'org', 'net', 'io'].includes(parts[1]));
-
     const subdomain = hasSubdomain ? parts[0] : null;
 
     // Block /api/v1/docs in production
@@ -33,28 +28,16 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Routes d'authentification partagées (ne pas réécrire vers les sous-domaines)
+    // Routes d'authentification partagées
     const sharedAuthRoutes = ['/login', '/register', '/forgot-password'];
     if (sharedAuthRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.next();
     }
 
-    // Si c'est localhost ou pas de subdomain, continuer avec la logique normale
-    if (isLocalhost || !subdomain || subdomain === 'www' || isVercel) {
-        // Continuer vers la logique d'authentification ci-dessous
-    }
-    // Pour admin subdomain
-    else if (subdomain === 'admin') {
-        // Laisser Next.js gérer via rewrites dans next.config.ts
-    }
-    // Pour labo subdomain
-    else if (subdomain === 'labo') {
-        // Laisser Next.js gérer via rewrites dans next.config.ts
-    }
-    // Pour les tenants (agences)
-    else {
-        // Note: Assurez-vous d'avoir un dossier src/app/[domain] ou gérez via une page dynamique
-        // Pour l'instant, on redirige vers une route de rendu
+    // Gestion des Tenants Dynamiques (Agences)
+    // admin et labo sont gérés par next.config.ts, on ne les touche pas ici
+    if (subdomain && !['www', 'admin', 'labo'].includes(subdomain) && !isVercel) {
+        // Rewrite pour les tenants dynamiques: tenant.kioskfy.com -> /tenant
         url.pathname = `/${subdomain}${pathname}`;
         return NextResponse.rewrite(url);
     }
@@ -94,6 +77,7 @@ export default async function proxy(request: NextRequest) {
 
     if (isPublicRoute && session && isAgency && !hasError && !isOrganizationDashboard) {
         // Agence redirigée vers son dashboard
+        // Sur le domaine labo, le dashboard est à la racine (/dashboard), pas /organization/dashboard
         if (subdomain === 'labo') {
             return NextResponse.redirect(new URL(`/dashboard`, request.url));
         }

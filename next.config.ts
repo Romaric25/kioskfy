@@ -68,9 +68,9 @@ const nextConfig: NextConfig = {
         ],
         destination: "/:path*",
       },
-      // Admin Subdomain - Generic rule for other paths
+      // Admin Subdomain - Exclure les routes API et statiques
       {
-        source: "/:path*",
+        source: "/((?!api|_next|static|.*\\..*).*)",
         has: [
           {
             type: "host",
@@ -79,9 +79,9 @@ const nextConfig: NextConfig = {
         ],
         destination: "/admin/:path*",
       },
-      // Labo Subdomain - Generic rule for other paths
+      // Labo Subdomain - Exclure les routes API et statiques
       {
-        source: "/:path*",
+        source: "/((?!api|_next|static|.*\\..*).*)",
         has: [
           {
             type: "host",

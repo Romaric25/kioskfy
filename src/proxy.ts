@@ -116,7 +116,7 @@ export default async function proxy(request: NextRequest) {
         // Agence redirigée vers son dashboard
         // Sur le domaine labo, le dashboard est à la racine (/dashboard), pas /organization/dashboard
         if (subdomain === 'labo') {
-            return NextResponse.redirect(new URL(`/dashboard`, request.url));
+            return NextResponse.redirect(new URL(`/organization/dashboard`, request.url));
         }
         return NextResponse.redirect(new URL(`/organization/dashboard`, request.url));
     }

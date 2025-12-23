@@ -70,25 +70,25 @@ const nextConfig: NextConfig = {
       },
       // Admin Subdomain - Exclure les routes API et statiques
       {
-        source: "/((?!api|_next|static|.*\\..*).*)",
+        source: "/:path((?!api|_next|static|.*\\..*).*)",
         has: [
           {
             type: "host",
             value: adminHost,
           },
         ],
-        destination: "/admin/:path*",
+        destination: "/admin/:path",
       },
       // Labo Subdomain - Exclure les routes API et statiques
       {
-        source: "/((?!api|_next|static|.*\\..*).*)",
+        source: "/:path((?!api|_next|static|.*\\..*).*)",
         has: [
           {
             type: "host",
             value: laboHost,
           },
         ],
-        destination: "/organization/:path*",
+        destination: "/organization/:path",
       },
     ];
   },

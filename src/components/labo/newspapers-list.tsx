@@ -1,6 +1,18 @@
 "use client";
 
 import {
+    ColumnDef,
+    ColumnFiltersState,
+    SortingState,
+    VisibilityState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
+import {
     Table,
     TableBody,
     TableCell,
@@ -8,10 +20,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useAllNewspapers, useNewspapersByOrganization, useUpdateNewspaper } from "@/hooks/use-newspapers.hook";
+import { useNewspapersByOrganization, useUpdateNewspaper } from "@/hooks/use-newspapers.hook";
 
 import { Badge } from "@/components/ui/badge";
-import { priceFormatter } from "@/lib/helpers";
+import { priceFormatter, formatDate } from "@/lib/helpers";
 import Image from "next/image";
 import { NewspapersListSkeleton } from "./skeleton/newspapers-list-skeleton";
 import {
@@ -22,6 +34,9 @@ import {
     Search,
     Pencil,
     Loader2,
+    ArrowUpDown,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditNewspaperSheet } from "./edit-newspaper-sheet";
@@ -54,15 +69,13 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useSelectedNewspaperStore } from "@/stores/use-newspaper.store";
-import { formatDate } from "@/lib/helpers";
 import { NewspaperResponse, Status } from "@/server/models/newspaper.model";
 import { useActiveOrganization } from "@/hooks";
 
 export function NewspapersList() {
     const { organisation } = useActiveOrganization();
     const router = useRouter();
-    const { selectedNewspaperId, setSelectedNewspaper } =
-        useSelectedNewspaperStore();
+    const { setSelectedNewspaper } = useSelectedNewspaperStore();
 
     // Extract organization ID from Better-Auth's organization structure
     const organizationId = organisation?.data?.id?.toString() || "";
@@ -70,8 +83,9 @@ export function NewspapersList() {
     const { updateNewspaper, isUpdatingNewspaper, isUpdatingNewspaperSuccess } =
         useUpdateNewspaper();
 
-    const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
     const [editingNewspaper, setEditingNewspaper] = useState<NewspaperResponse | null>(
         null
     );
@@ -133,31 +147,178 @@ export function NewspapersList() {
         }
     };
 
-    const filteredNewspapers = newspapers?.data?.filter((newspaper) => {
-        const matchesSearch = newspaper.issueNumber
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
-        const matchesStatus =
-            statusFilter === "all" || newspaper.status === statusFilter;
-        return matchesSearch && matchesStatus;
+    const viewNewspaper = (id: string) => {
+        setSelectedNewspaper(id, "");
+        router.push(`/organization/render`);
+    };
+
+    const columns: ColumnDef<NewspaperResponse>[] = [
+        {
+            accessorKey: "coverImage",
+            header: "Couverture",
+            cell: ({ row }) => (
+                <div className="relative h-16 w-12 overflow-hidden rounded-md border">
+                    {row.original.coverImage ? (
+                        <Image
+                            src={row.original.coverImage}
+                            alt={`Couverture ${row.original.issueNumber}`}
+                            fill
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                            N/A
+                        </div>
+                    )}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "issueNumber",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="-ml-3 h-8 hover:bg-accent/50"
+                    >
+                        Numéro
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="font-medium">{row.getValue("issueNumber")}</div>,
+        },
+        {
+            accessorKey: "publishDate",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="-ml-3 h-8 hover:bg-accent/50"
+                    >
+                        Date de publication
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => {
+                const date = row.getValue("publishDate");
+                return date ? formatDate(date as string | Date, "fr") : "N/A";
+            },
+        },
+        {
+            accessorKey: "status",
+            header: "Statut",
+            cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+            filterFn: (row, id, value) => {
+                return value === "all" ? true : row.getValue(id) === value;
+            },
+        },
+        {
+            accessorKey: "price",
+            header: "Prix",
+            cell: ({ row }) => priceFormatter(Number(row.getValue("price")), "XAF", "fr"),
+        },
+        {
+            id: "pdf",
+            header: "PDF",
+            cell: ({ row }) => {
+                const newspaper = row.original;
+                return newspaper?.pdf ? (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewNewspaper(newspaper.id)}
+                        className="flex items-center gap-2 h-8"
+                    >
+                        <FileText className="h-4 w-4" />
+                        Aperçu
+                    </Button>
+                ) : (
+                    <span className="text-muted-foreground text-xs">N/A</span>
+                );
+            },
+        },
+        {
+            id: "actions",
+            header: () => <div className="text-right">Actions</div>,
+            cell: ({ row }) => {
+                const newspaper = row.original;
+                return (
+                    <div className="flex justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Ouvrir le menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleEditNewspaper(newspaper)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Modifier
+                                </DropdownMenuItem>
+                                {newspaper.status === Status.DRAFT && (
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            openConfirmDialog(
+                                                newspaper.id,
+                                                Status.PUBLISHED,
+                                                "publish"
+                                            )
+                                        }
+                                        disabled={isUpdatingNewspaper}
+                                        className="text-green-600 focus:text-green-700 focus:bg-green-50"
+                                    >
+                                        <Globe className="mr-2 h-4 w-4" />
+                                        Publier
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        openConfirmDialog(
+                                            newspaper.id,
+                                            Status.ARCHIVED,
+                                            "archive"
+                                        )
+                                    }
+                                    disabled={
+                                        newspaper.status === Status.ARCHIVED || isUpdatingNewspaper
+                                    }
+                                    className="text-orange-600 focus:text-orange-700 focus:bg-orange-50"
+                                >
+                                    <Archive className="mr-2 h-4 w-4" />
+                                    Archiver
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
+        },
+    ];
+
+    const table = useReactTable({
+        data: newspapers?.data || [],
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        state: {
+            sorting,
+            columnFilters,
+        },
     });
 
     if (newspapersLoading) {
         return <NewspapersListSkeleton />;
     }
-
-    if (!newspapers || newspapers?.data.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8 border rounded-lg bg-muted/10">
-                <p className="text-muted-foreground">Aucun journal trouvé</p>
-            </div>
-        );
-    }
-
-    const viewNewspaper = (id: string) => {
-        setSelectedNewspaper(id, "");
-        router.push(`/organization/render`);
-    };
 
     return (
         <div className="space-y-4">
@@ -166,12 +327,19 @@ export function NewspapersList() {
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Rechercher par numéro..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={(table.getColumn("issueNumber")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("issueNumber")?.setFilterValue(event.target.value)
+                        }
                         className="pl-8"
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                    value={(table.getColumn("status")?.getFilterValue() as string) ?? "all"}
+                    onValueChange={(value) =>
+                        table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)
+                    }
+                >
                     <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Filtrer par statut" />
                     </SelectTrigger>
@@ -187,124 +355,76 @@ export function NewspapersList() {
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead>Couverture</TableHead>
-                            <TableHead>Numéro</TableHead>
-                            <TableHead>Date de publication</TableHead>
-                            <TableHead>Statut</TableHead>
-                            <TableHead>Prix</TableHead>
-                            <TableHead>PDF</TableHead>
-                            <TableHead className="w-[70px]">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredNewspapers?.map((newspaper) => (
-                            <TableRow key={newspaper.id}>
-                                <TableCell>
-                                    <div className="relative h-16 w-12 overflow-hidden rounded-md border">
-                                        {newspaper.coverImage ? (
-                                            <Image
-                                                src={newspaper.coverImage}
-                                                alt={`Couverture ${newspaper.issueNumber}`}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                                                N/A
-                                            </div>
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                    {newspaper.issueNumber}
-                                </TableCell>
-                                <TableCell>
-                                    {formatDate(newspaper.publishDate, "fr")}
-                                </TableCell>
-                                <TableCell>
-                                    <StatusBadge status={newspaper.status} />
-                                </TableCell>
-                                <TableCell>
-                                    {priceFormatter(
-                                        Number(newspaper.price),
-                                        "XAF",
-                                        "fr"
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {newspaper?.pdf ? (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => viewNewspaper(newspaper.id)}
-                                        >
-                                            <FileText className="h-4 w-4" />
-                                            Aperçu
-                                        </Button>
-                                    ) : (
-                                        <span className="text-muted-foreground text-xs">N/A</span>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Ouvrir le menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    handleEditNewspaper(newspaper)
-                                                }
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Modifier
-                                            </DropdownMenuItem>
-                                            {newspaper.status === Status.DRAFT && (
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        openConfirmDialog(
-                                                            newspaper.id,
-                                                            Status.PUBLISHED,
-                                                            "publish"
-                                                        )
-                                                    }
-                                                    disabled={isUpdatingNewspaper}
-                                                    className="text-green-600 focus:text-green-700 focus:bg-green-50"
-                                                >
-                                                    <Globe className="mr-2 h-4 w-4" />
-                                                    Publier
-                                                </DropdownMenuItem>
-                                            )}
-
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    openConfirmDialog(
-                                                        newspaper.id,
-                                                        Status.ARCHIVED,
-                                                        "archive"
-                                                    )
-                                                }
-                                                disabled={
-                                                    newspaper.status === Status.ARCHIVED ||
-                                                    isUpdatingNewspaper
-                                                }
-                                                className="text-orange-600 focus:text-orange-700 focus:bg-orange-50"
-                                            >
-                                                <Archive className="mr-2 h-4 w-4" />
-                                                Archiver
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => {
+                                    return (
+                                        <TableHead key={header.id}>
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext()
+                                                )}
+                                        </TableHead>
+                                    );
+                                })}
                             </TableRow>
                         ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && "selected"}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-24 text-center"
+                                >
+                                    Aucun journal trouvé.
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                    Précédent
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                >
+                    Suivant
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
+
 
             <EditNewspaperSheet
                 newspaper={editingNewspaper}
@@ -313,9 +433,7 @@ export function NewspapersList() {
             />
 
             {/* Confirmation Dialog */}
-            <AlertDialog
-                open={confirmAction?.isOpen}
-            >
+            <AlertDialog open={confirmAction?.isOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
@@ -330,7 +448,9 @@ export function NewspapersList() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isUpdatingNewspaper}>Annuler</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isUpdatingNewspaper} onClick={closeConfirmDialog}>
+                            Annuler
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmStatusChange}
                             disabled={isUpdatingNewspaper}
@@ -345,10 +465,10 @@ export function NewspapersList() {
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Mise à jour...
                                 </>
+                            ) : confirmAction?.actionType === "publish" ? (
+                                "Publier"
                             ) : (
-                                confirmAction?.actionType === "publish"
-                                    ? "Publier"
-                                    : "Archiver"
+                                "Archiver"
                             )}
                         </AlertDialogAction>
                     </AlertDialogFooter>

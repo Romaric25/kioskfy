@@ -106,13 +106,14 @@ export default async function proxy(request: NextRequest) {
 
     const isDashboard = pathname.includes("/dashboard");
     const isOrganizationDashboard = pathname.includes("/organization/dashboard");
+    const isViewNewspaper = pathname.includes("/organization/render");
 
     if (isPublicRoute && session && isClient && !hasError && !isDashboard) {
         // Client redirigé vers son dashboard
         return NextResponse.redirect(new URL(`/dashboard`, request.url));
     }
 
-    if (isPublicRoute && session && isAgency && !hasError && !isOrganizationDashboard) {
+    if (isPublicRoute && session && isAgency && !hasError && !isOrganizationDashboard && !isViewNewspaper) {
         // Agence redirigée vers son dashboard
         // Sur le domaine labo, le dashboard est à la racine (/dashboard), pas /organization/dashboard
         if (subdomain === 'labo') {

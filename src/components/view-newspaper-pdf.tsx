@@ -209,7 +209,7 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
                 const token = await fetchPdfToken(selectedNewspaperId);
                 if (!token) throw new Error("Token generation failed");
 
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+                const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
                 const url = `${baseUrl}/api/v1/newspapers/${selectedNewspaperId}/view?token=${encodeURIComponent(token)}`;
 
                 const loadingTask = pdfjs.getDocument({ url, withCredentials: true });

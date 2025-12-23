@@ -1,5 +1,6 @@
-import { Sidebar } from "@/components/labo/sidebar";
-import { Header } from "@/components/labo/header";
+import { LaboSidebar } from "@/components/labo/labo-sidebar";
+import { LaboHeader } from "@/components/labo/labo-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout({
   children,
@@ -7,14 +8,23 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-muted/20">
-      <div className="hidden md:block w-64 fixed inset-y-0 z-50">
-        <Sidebar />
-      </div>
-      <div className="md:pl-64 flex-1 flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 p-6 md:p-8 pt-6">{children}</main>
-      </div>
-    </div>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <LaboSidebar variant="inset" />
+      <SidebarInset>
+        <LaboHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <main className="flex-1 p-4 md:p-6">{children}</main>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

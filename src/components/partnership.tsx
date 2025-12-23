@@ -90,6 +90,11 @@ const StatCard = ({ value, label, suffix = "+" }: { value: string; label: string
 );
 
 export function Partnership() {
+  const isProd = process.env.NODE_ENV === "production";
+  const laboUrl = process.env.NEXT_PUBLIC_LABO_URL
+  const host = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
+  const url = isProd ? `https://${host}/organization/subscription` : `/organization/subscription`;
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
       {/* Hero Section with modern gradient mesh simulation */}
@@ -120,13 +125,13 @@ export function Partnership() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-              <Link href="/organization/subscription">
+              <Link href={url}>
                 <Button size="xl" className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:scale-105">
                   Commencer maintenant
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/organization/subscription">
+              <Link href={url}>
                 <Button size="xl" variant="outline" className="h-14 px-8 text-lg rounded-full border-2 hover:bg-secondary/50">
                   Découvrir les avantages
                 </Button>

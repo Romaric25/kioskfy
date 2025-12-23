@@ -122,6 +122,14 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(`/organization/dashboard`, request.url));
     }
 
+
+    // Rediriger /organization/render vers login si non connecté
+    if (isViewNewspaper && !session) {
+        const loginUrl = new URL(`/organization/login`, request.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
+    }
+
     if (isProtectedRoute) {
         // Pas connecté -> redirection login
         if (!session) {

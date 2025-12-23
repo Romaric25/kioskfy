@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ export const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const redirect = useSearchParams().get("redirect");
 
   const form = useForm<LoginUser>({
     resolver: zodResolver(loginSchema),
@@ -44,7 +45,7 @@ export const LoginForm = () => {
       {
         email: data.email,
         password: data.password,
-        callbackURL: "/dashboard",
+        callbackURL: redirect || "/dashboard",
       },
       {
         onError: (ctx) => {
@@ -53,7 +54,7 @@ export const LoginForm = () => {
           setIsLoading(false);
         },
         onSuccess: () => {
-          router.push("/organization/dashboard");
+          router.push(redirect || "/organization/dashboard");
           setIsLoading(false);
         },
       }

@@ -250,11 +250,11 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
         };
         const handleContext = (e: MouseEvent) => e.preventDefault();
 
-        //window.addEventListener("keydown", handleKeys);
-        //window.addEventListener("contextmenu", handleContext);
+        window.addEventListener("keydown", handleKeys);
+        window.addEventListener("contextmenu", handleContext);
         return () => {
-            //window.removeEventListener("keydown", handleKeys);
-            //window.removeEventListener("contextmenu", handleContext);
+            window.removeEventListener("keydown", handleKeys);
+            window.removeEventListener("contextmenu", handleContext);
         };
     }, []);
 

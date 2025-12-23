@@ -65,6 +65,7 @@ export function OrganizationForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      email: user?.email || "",
       address: "",
       country: "",
       phone: "",
@@ -136,7 +137,7 @@ export function OrganizationForm() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="font-bold">
                       Nom de l'agence <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
@@ -155,7 +156,7 @@ export function OrganizationForm() {
                 name="logoFile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Logo de l'agence</FormLabel>
+                    <FormLabel className="font-bold">Logo de l'agence</FormLabel>
                     <FormControl>
                       <UploadFile
                         fieldName="logoFile"
@@ -185,7 +186,7 @@ export function OrganizationForm() {
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="font-bold">
                       Pays <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
@@ -218,10 +219,25 @@ export function OrganizationForm() {
               />
               <FormField
                 control={form.control}
-                name="address"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
+                      Email <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Entrez l'email de l'organisation" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-bold">
                       Adresse <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
@@ -236,7 +252,7 @@ export function OrganizationForm() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="font-bold">
                       Téléphone <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
@@ -256,7 +272,7 @@ export function OrganizationForm() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
+                    <FormLabel className="font-bold">
                       Description <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>

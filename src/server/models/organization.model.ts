@@ -24,7 +24,7 @@ export const organizationSchema = z.object({
     id: z.string(),
     name: z.string().min(1, "Le nom de l'agence est requis"),
     slug: z.string(),
-    email: z.string().email().optional(),
+    email: z.email({ message: "L'email de l'agence est requis" }),
     logo: z.string().nullable().optional(),
     price: z.coerce.number().optional(),
     logoUploadId: z.number().optional(),
@@ -48,7 +48,7 @@ export const createOrganizationSchema = organizationSchema.omit({
 
 export const createInvitationSchema = z.object({
     organizationId: z.string(),
-    email: z.string().email(),
+    email: z.email(),
     role: z.string(),
     resend: z.boolean().optional(),
     teamId: z.string().optional(),

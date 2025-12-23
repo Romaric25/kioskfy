@@ -120,10 +120,10 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             body: t.Object({
                 issueNumber: t.String({ minLength: 1 }),
                 publishDate: t.String({ minLength: 1 }),
-                coverImageFile: t.Optional(t.Array(t.Any())),
+                coverImageFile: t.Array(t.Any(), { minItems: 1 }),
                 price: t.Number({ minimum: 0 }),
                 status: t.Enum(Status),
-                pdfFile: t.Optional(t.Array(t.Any())),
+                pdfFile: t.Array(t.Any(), { minItems: 1 }),
                 categoryIds: t.Array(t.Number()),
                 organizationId: t.String({ minLength: 1 }),
                 country: t.String({ minLength: 1 }),

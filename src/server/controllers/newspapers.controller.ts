@@ -280,104 +280,146 @@ export class NewspapersController {
         try {
             const newspaperId = createId();
 
-            // 1. Create the newspaper record first (with empty URLs)
-            await db.insert(newspapers).values({
-                id: newspaperId,
-                issueNumber: data.issueNumber,
-                publishDate: new Date(data.publishDate),
-                coverImage: "",
-                price: data.price.toString(),
-                pdf: "",
-                status: data.status,
-                organizationId: data.organizationId,
-                countryId: parseInt(data.country),
-            });
+            // Lookup country ID by name
+            let countryId: number | null = null;
+            if (data.country) {
+                const countryResult = await db
+                    .select({ id: countries.id })
+                    .from(countries)
+                    .where(eq(countries.name, data.country))
+                    .limit(1);
 
-            // 2. Handle cover image upload (with processing: resize, WebP, thumbnail)
+                if (countryResult.length > 0) {
+                    countryId = countryResult[0].id;
+                }
+            }
+
+            // 1. Process files first (Upload & Create Upload Records)
             let coverImageUrl = "";
             let coverImageUploadId: number | null = null;
+            let pdfUrl = "";
+            let pdfUploadId: number | null = null;
 
+            // Handle cover image upload
             if (data.coverImageFile && data.coverImageFile.length > 0) {
                 const coverFile = data.coverImageFile[0];
 
-                // If it's a File object, upload it with image processing
-                if (coverFile instanceof File || (coverFile && typeof coverFile === 'object' && 'file' in coverFile)) {
-                    const fileToUpload = coverFile instanceof File ? coverFile : coverFile.file as File;
+                if (coverFile instanceof File || (coverFile && typeof coverFile === 'object')) {
+                    let fileToUpload: File | null = null;
 
-                    // Use uploadImage for automatic resize, WebP conversion, and thumbnail
-                    const uploadResult = await UploadsController.uploadImage(fileToUpload, {
-                        maxWidth: 1200,
-                        maxHeight: 1600,
-                        quality: 85,
-                        createThumbnail: true,
-                    });
+                    if (coverFile instanceof File) {
+                        fileToUpload = coverFile;
+                    } else if ('base64' in coverFile && typeof (coverFile as any).base64 === 'string') {
+                        // Handle Base64 wrapper (sent via JSON)
+                        const base64Data = (coverFile as any).base64 as string;
+                        const base64Content = base64Data.includes(';base64,')
+                            ? base64Data.split(';base64,')[1]
+                            : base64Data;
 
-                    if (uploadResult.success && uploadResult.data) {
-                        coverImageUrl = uploadResult.data.url;
+                        const buffer = Buffer.from(base64Content, 'base64');
+                        const fileName = (coverFile as any).name || 'image.png';
+                        const fileType = (coverFile as any).type || 'image/png';
 
-                        // Create upload record in database with thumbnail info
-                        const uploadRecord = await db.insert(uploads).values({
-                            filename: fileToUpload.name.replace(/\.[^/.]+$/, '.webp'),
-                            thumbnailS3Key: uploadResult.data.s3Key,
-                            thumbnailUrl: uploadResult.data.thumbnailUrl || uploadResult.data.url,
-                        });
-                        coverImageUploadId = uploadRecord[0].insertId;
-
-                        console.log(`[Newspaper] Cover image processed: ${uploadResult.data.width}x${uploadResult.data.height}`);
+                        fileToUpload = new File([buffer], fileName, { type: fileType });
+                    } else if ('file' in coverFile) {
+                        // Fallback: If received via FormData/special handling where 'file' is preserved
+                        const innerFile = (coverFile as any).file as Blob;
+                        const fileName = (coverFile as any).name || 'image.png';
+                        const fileType = (coverFile as any).type || 'image/png';
+                        fileToUpload = new File([innerFile], fileName, { type: fileType });
+                    } else {
+                        console.error("[Newspaper Create] Invalid cover file format");
                     }
-                }
-                // If it's a base64 string or URL, use it directly
-                else if (typeof coverFile === 'string') {
+
+                    if (fileToUpload) {
+                        const uploadResult = await UploadsController.uploadImage(fileToUpload, {
+                            maxWidth: 1200,
+                            maxHeight: 1600,
+                            quality: 85,
+                            createThumbnail: true,
+                        });
+
+                        if (uploadResult.success && 'data' in uploadResult && uploadResult.data) {
+                            coverImageUrl = uploadResult.data.url;
+
+                            const uploadRecord = await db.insert(uploads).values({
+                                filename: fileToUpload.name.replace(/\.[^/.]+$/, '.webp'),
+                                thumbnailS3Key: uploadResult.data.s3Key,
+                                thumbnailUrl: uploadResult.data.thumbnailUrl || uploadResult.data.url,
+                            });
+                            coverImageUploadId = uploadRecord[0].insertId;
+                        }
+                    }
+                } else if (typeof coverFile === 'string') {
                     coverImageUrl = coverFile;
                 }
             }
 
-            // 3. Handle PDF upload (no processing, upload as-is)
-            let pdfUrl = "";
-            let pdfUploadId: number | null = null;
-
+            // Handle PDF upload
             if (data.pdfFile && data.pdfFile.length > 0) {
                 const pdfFile = data.pdfFile[0];
 
-                // If it's a File object, upload it
-                if (pdfFile instanceof File || (pdfFile && typeof pdfFile === 'object' && 'file' in pdfFile)) {
-                    const fileToUpload = pdfFile instanceof File ? pdfFile : pdfFile.file as File;
+                if (pdfFile instanceof File || (pdfFile && typeof pdfFile === 'object')) {
+                    let fileToUpload: File | null = null;
 
-                    // Use uploadPdf for PDFs (no image processing)
-                    const uploadResult = await UploadsController.uploadPdf(fileToUpload);
+                    if (pdfFile instanceof File) {
+                        fileToUpload = pdfFile;
+                    } else if ('base64' in pdfFile && typeof (pdfFile as any).base64 === 'string') {
+                        // Handle Base64 wrapper (sent via JSON)
+                        const base64Data = (pdfFile as any).base64 as string;
+                        const base64Content = base64Data.includes(';base64,')
+                            ? base64Data.split(';base64,')[1]
+                            : base64Data;
 
-                    if (uploadResult.success && uploadResult.data) {
-                        pdfUrl = uploadResult.data.url;
+                        const buffer = Buffer.from(base64Content, 'base64');
+                        const fileName = (pdfFile as any).name || 'document.pdf';
+                        const fileType = (pdfFile as any).type || 'application/pdf';
 
-                        // Create upload record in database
-                        const uploadRecord = await db.insert(uploads).values({
-                            filename: fileToUpload.name,
-                            thumbnailS3Key: uploadResult.data.s3Key,
-                            thumbnailUrl: uploadResult.data.url,
-                        });
-                        pdfUploadId = uploadRecord[0].insertId;
-
-                        console.log(`[Newspaper] PDF uploaded: ${fileToUpload.name}`);
+                        fileToUpload = new File([buffer], fileName, { type: fileType });
+                    } else if ('file' in pdfFile) {
+                        const innerFile = (pdfFile as any).file as Blob;
+                        const fileName = (pdfFile as any).name || 'document.pdf';
+                        const fileType = (pdfFile as any).type || 'application/pdf';
+                        fileToUpload = new File([innerFile], fileName, { type: fileType });
+                    } else {
+                        console.error("[Newspaper Create] Invalid PDF file format");
                     }
-                }
-                // If it's a base64 string or URL, use it directly
-                else if (typeof pdfFile === 'string') {
+
+                    if (fileToUpload) {
+                        const uploadResult = await UploadsController.uploadPdf(fileToUpload);
+
+                        if (uploadResult.success && 'data' in uploadResult && uploadResult.data) {
+                            pdfUrl = uploadResult.data.url;
+
+                            const uploadRecord = await db.insert(uploads).values({
+                                filename: fileToUpload.name,
+                                thumbnailS3Key: uploadResult.data.s3Key,
+                                thumbnailUrl: uploadResult.data.url,
+                            });
+                            pdfUploadId = uploadRecord[0].insertId;
+                        }
+                    }
+                } else if (typeof pdfFile === 'string') {
                     pdfUrl = pdfFile;
                 }
             }
 
-            // 4. Update the newspaper with file URLs and upload IDs
-            const updateData: Record<string, unknown> = {};
-            if (coverImageUrl) updateData.coverImage = coverImageUrl;
-            if (pdfUrl) updateData.pdf = pdfUrl;
-            if (coverImageUploadId) updateData.coverImageUploadId = coverImageUploadId;
-            if (pdfUploadId) updateData.pdfUploadId = pdfUploadId;
+            // 2. Insert the newspaper record with all data
+            await db.insert(newspapers).values({
+                id: newspaperId,
+                issueNumber: data.issueNumber,
+                publishDate: new Date(data.publishDate),
+                coverImage: coverImageUrl,
+                price: data.price.toString(),
+                pdf: pdfUrl,
+                status: data.status,
+                organizationId: data.organizationId,
+                countryId: countryId,
+                coverImageUploadId: coverImageUploadId,
+                pdfUploadId: pdfUploadId,
+            });
 
-            if (Object.keys(updateData).length > 0) {
-                await db.update(newspapers).set(updateData).where(eq(newspapers.id, newspaperId));
-            }
-
-            // 5. Insert category associations
+            // 3. Insert category associations
             if (data.categoryIds && data.categoryIds.length > 0) {
                 await db.insert(newspapersCategories).values(
                     data.categoryIds.map((categoryId) => ({
@@ -438,7 +480,18 @@ export class NewspapersController {
             if (data.publishDate) updateData.publishDate = new Date(data.publishDate);
             if (data.price) updateData.price = data.price.toString();
             if (data.status) updateData.status = data.status;
-            if (data.country) updateData.countryId = parseInt(data.country);
+            if (data.country) {
+                // Lookup country ID by name
+                const countryResult = await db
+                    .select({ id: countries.id })
+                    .from(countries)
+                    .where(eq(countries.name, data.country))
+                    .limit(1);
+
+                if (countryResult.length > 0) {
+                    updateData.countryId = countryResult[0].id;
+                }
+            }
             if (data.organizationId) updateData.organizationId = data.organizationId;
 
             if (Object.keys(updateData).length > 0) {

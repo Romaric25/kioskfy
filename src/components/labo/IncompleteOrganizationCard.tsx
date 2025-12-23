@@ -27,7 +27,7 @@ export function IncompleteOrganizationCard() {
                     </p>
                 </div>
                 <Button asChild className="w-full">
-                    <a href="/dashboard/settings">
+                    <a href="/organization/dashboard/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Accéder aux paramètres
                     </a>

@@ -82,7 +82,11 @@ export const useCreateOrganization = () => {
       });
 
       if (result.error) {
-        throw new Error(result.error.value?.toString() || "Erreur lors de la création de l'organisation");
+        const errorValue = result.error.value as unknown;
+        const errorMessage = typeof errorValue === 'object' && errorValue !== null
+          ? (errorValue as any)?.error || (errorValue as any)?.message || JSON.stringify(errorValue)
+          : String(errorValue) || "Erreur lors de la création de l'organisation";
+        throw new Error(errorMessage);
       }
 
       const responseData = result.data;
@@ -144,7 +148,11 @@ export const useUpdateOrganization = () => {
       });
 
       if (result.error) {
-        throw new Error(result.error.value?.toString() || "Erreur lors de la mise à jour de l'organisation");
+        const errorValue = result.error.value as unknown;
+        const errorMessage = typeof errorValue === 'object' && errorValue !== null
+          ? (errorValue as any)?.error || (errorValue as any)?.message || JSON.stringify(errorValue)
+          : String(errorValue) || "Erreur lors de la mise à jour de l'organisation";
+        throw new Error(errorMessage);
       }
 
       const responseData = result.data;

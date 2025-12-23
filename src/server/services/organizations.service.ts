@@ -30,10 +30,10 @@ export const organizationsService = new Elysia({ prefix: "/organizations" })
     // Create organization with logo
     .post(
         "/",
-        async ({ body, set, user }) => {
+        async ({ body, set, user, request }) => {
             const userId = user.id;
 
-            const result = await OrganizationsController.create(body, userId);
+            const result = await OrganizationsController.create(body, userId, request.headers);
             if ("status" in result) {
                 set.status = result.status;
             }
@@ -44,7 +44,7 @@ export const organizationsService = new Elysia({ prefix: "/organizations" })
             body: t.Object({
                 name: t.String({ minLength: 1 }),
                 slug: t.Optional(t.String()),
-                email: t.Optional(t.String({ format: "email" })),
+                email: t.String({ format: "email" }),
                 phone: t.String({ minLength: 1 }),
                 country: t.String({ minLength: 1 }),
                 address: t.String({ minLength: 1 }),
@@ -63,8 +63,8 @@ export const organizationsService = new Elysia({ prefix: "/organizations" })
     // Update organization with logo
     .put(
         "/:id",
-        async ({ params: { id }, body, set }) => {
-            const result = await OrganizationsController.update(id, body);
+        async ({ params: { id }, body, set, request }) => {
+            const result = await OrganizationsController.update(id, body, request.headers);
             if ("status" in result && !result.success) {
                 set.status = result.status;
             }

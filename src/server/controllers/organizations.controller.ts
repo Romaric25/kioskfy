@@ -69,7 +69,7 @@ export class OrganizationsController {
      * Créer une organisation avec gestion du logo
      * Utilise better-auth pour créer l'organisation
      */
-    static async create(input: CreateOrganizationInput, userId: string) {
+    static async create(input: CreateOrganizationInput, userId: string, headers: Headers) {
         try {
             let logoUrl: string | undefined;
             let logoUploadId: number | undefined = input.logoUploadId;
@@ -108,7 +108,7 @@ export class OrganizationsController {
                     description: input.description,
                     price: input.price,
                 },
-                headers: new Headers(),
+                headers,
                 query: {
                     userId,
                 },
@@ -142,7 +142,7 @@ export class OrganizationsController {
     /**
      * Mettre à jour une organisation avec gestion du logo
      */
-    static async update(organizationId: string, input: UpdateOrganizationInput) {
+    static async update(organizationId: string, input: UpdateOrganizationInput, headers: Headers) {
         try {
             // Get current organization
             const existing = await db
@@ -220,7 +220,7 @@ export class OrganizationsController {
                         price: input.price,
                     },
                 },
-                headers: new Headers(),
+                headers,
             });
 
             if (!result) {

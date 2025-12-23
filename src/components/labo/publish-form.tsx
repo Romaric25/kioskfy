@@ -144,7 +144,7 @@ export function PublishForm() {
     if (isCreatingNewspaperSuccess) {
       toast.success("Édition publiée avec succès");
       form.reset();
-      router.push("/dashboard/newspapers");
+      router.push("/organization/dashboard/newspapers");
     }
   }, [isCreatingNewspaperSuccess, router, form]);
 
@@ -166,6 +166,31 @@ export function PublishForm() {
   // Si l'organisation n'est pas complète, afficher un message
   if (!isOrganizationCompleted) {
     return <IncompleteOrganizationCard />;
+  }
+
+  // Si l'organisation n'est pas active, afficher un message
+  const isOrganizationActive = metadata?.isActive === true;
+  if (!isOrganizationActive) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-600">
+            <FileText className="h-5 w-5" />
+            Organisation inactive
+          </CardTitle>
+          <CardDescription>
+            Votre organisation n'est pas encore active. Veuillez activer votre organisation dans les paramètres pour pouvoir publier des éditions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild className="w-full">
+            <a href="/organization/dashboard/settings">
+              Accéder aux paramètres
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

@@ -12,14 +12,26 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
     .get(
         "/cron/publish-drafts",
         async ({ request, set }) => {
+            console.log("[Cron] Requête reçue sur /cron/publish-drafts");
+
             // Sécurisation via CRON_SECRET (envoyé par Vercel)
             const authHeader = request.headers.get("Authorization");
             const cronSecret = process.env.CRON_SECRET;
 
+            console.log("[Cron] Auth Check:", {
+                hasAuthHeader: !!authHeader,
+                hasSecret: !!cronSecret
+            });
+
             // Si un secret est configuré, on vérifie qu'il correspond
             if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+                console.warn("[Cron] Tentative d'accès non autorisée (Token invalide ou absent)");
                 set.status = 401;
                 return { success: false, error: "Unauthorized" };
+            }
+
+            if (!cronSecret) {
+                console.warn("[Cron] Attention: CRON_SECRET non configuré, exécution non sécurisée");
             }
 
             console.log("[Cron] Démarrage de la tâche de publication automatique (via HTTP)");

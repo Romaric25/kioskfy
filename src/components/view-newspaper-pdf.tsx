@@ -9,7 +9,8 @@ import { PdfThumbnail } from "@/components/pdf-thumbnail";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { PanelLeftClose, PanelLeft, ArrowLeft, ZoomIn, ZoomOut, Maximize, Minimize } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PanelLeftClose, PanelLeft, ArrowLeft, ZoomIn, ZoomOut, Maximize, Minimize, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 type Props = { scale?: number };
@@ -132,7 +133,7 @@ PdfPage.displayName = "PdfPage";
 
 // --- Main Viewer Component ---
 
-export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larger default scale
+export const NewspaperPdfViewer = ({ scale = 0.60 }: Props) => { // slightly larger default scale
     const rootRef = useRef<HTMLDivElement>(null); // New Root Ref
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [loading, setLoading] = useState(true);
@@ -140,6 +141,8 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
     const [currentScale, setCurrentScale] = useState(scale);
     const [isWindowFocused, setIsWindowFocused] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false); // Fullscreen state
+    const [isDoublePage, setIsDoublePage] = useState(false); // Double page mode toggle
+    const [pageInput, setPageInput] = useState("1"); // For the input field
 
     // PDF State
     const [pdfDocument, setPdfDocument] = useState<any>(null);
@@ -155,6 +158,11 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
     const agencyName = newspaper?.organization?.name;
     const watermark = agencyName ? `${agencyName} sur KIOSKFY.COM` : "KIOSKFY.COM";
 
+    // Update input when active page changes (e.g. scrolling)
+    useEffect(() => {
+        setPageInput(activePage.toString());
+    }, [activePage]);
+
     // Zoom Handlers
     const handleZoomIn = () => setCurrentScale(prev => Math.min(prev + 0.2, 3.0));
     const handleZoomOut = () => setCurrentScale(prev => Math.max(prev - 0.2, 0.5));
@@ -167,6 +175,11 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
         } else {
             document.exitFullscreen();
         }
+    };
+
+    const toggleDoublePage = () => {
+        setIsDoublePage(!isDoublePage);
+        // Reset scale appropriately when switching modes might be good UX, but keeping user choice for now
     };
 
     useEffect(() => {
@@ -259,8 +272,10 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
     }, []);
 
     const scrollToPage = (pageNum: number) => {
-        setActivePage(pageNum); // Update active state immediately
-        const element = document.getElementById(`pdf-page-${pageNum}`);
+        const targetPage = Math.max(1, Math.min(pageNum, numPages));
+        setActivePage(targetPage); // Update active state immediately
+        // In double page mode, we might need to scroll to the spread containing the page
+        const element = document.getElementById(`pdf-page-${targetPage}`);
         if (element) {
             element.scrollIntoView({ behavior: "smooth" });
         }
@@ -269,6 +284,58 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
     const handlePageInView = useCallback((pageNum: number) => {
         setActivePage(pageNum);
     }, []);
+
+    // Generate spreads for rendering
+    const spreads = React.useMemo(() => {
+        if (!isDoublePage) {
+            // Single page mode: e.g. [[1], [2], [3], [4]]
+            return Array.from({ length: numPages }, (_, i) => [i + 1]);
+        }
+
+        // Double page mode: e.g. [[1], [2, 3], [4, 5]]
+        const result: number[][] = [];
+        if (numPages > 0) {
+            result.push([1]); // Cover always alone
+            for (let i = 2; i <= numPages; i += 2) {
+                if (i + 1 <= numPages) {
+                    result.push([i, i + 1]);
+                } else {
+                    result.push([i]); // Last page alone if odd count
+                }
+            }
+        }
+        return result;
+    }, [numPages, isDoublePage]);
+
+    const handlePrevPage = () => {
+        if (activePage <= 1) return;
+        const currentSpreadIndex = spreads.findIndex(s => s.includes(activePage));
+        if (currentSpreadIndex > 0) {
+            scrollToPage(spreads[currentSpreadIndex - 1][0]);
+        } else {
+            scrollToPage(activePage - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (activePage >= numPages) return;
+        const currentSpreadIndex = spreads.findIndex(s => s.includes(activePage));
+        if (currentSpreadIndex !== -1 && currentSpreadIndex < spreads.length - 1) {
+            scrollToPage(spreads[currentSpreadIndex + 1][0]);
+        } else {
+            scrollToPage(activePage + 1);
+        }
+    };
+
+    const handlePageSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const page = parseInt(pageInput);
+        if (!isNaN(page) && page >= 1 && page <= numPages) {
+            scrollToPage(page);
+        } else {
+            setPageInput(activePage.toString()); // Reset on invalid
+        }
+    };
 
     if (loading) {
         return (
@@ -308,7 +375,6 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
                             </Button>
                         </Link>
                     </div>
-                    <p className="text-xs text-muted-foreground">Page {activePage} sur {numPages}</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-4 min-w-64">
                     {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
@@ -325,42 +391,102 @@ export const NewspaperPdfViewer = ({ scale = 1.2 }: Props) => { // slightly larg
 
             {/* Main Content */}
             <div className="flex-1 bg-muted/20 flex flex-col relative overflow-hidden">
-                <header className="h-14 border-b bg-background/95 backdrop-blur flex items-center px-4 gap-4 z-10 shrink-0">
+                <header className="h-auto min-h-14 py-2 border-b bg-background/95 backdrop-blur flex flex-wrap items-center px-4 gap-2 z-10 shrink-0 justify-between sm:justify-start">
                     <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
                         {sidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
                     </Button>
+
+                    {/* Navigation Controls */}
+                    <div className="flex items-center gap-1 order-2 sm:order-none w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handlePrevPage} disabled={activePage <= 1}>
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <form onSubmit={handlePageSubmit} className="flex items-center gap-1 mx-1">
+                            <Input
+                                className="h-8 w-12 px-1 text-center"
+                                value={pageInput}
+                                onChange={(e) => setPageInput(e.target.value)}
+                                onBlur={() => setPageInput(activePage.toString())}
+                            />
+                            <span className="text-sm text-muted-foreground w-10">/ {numPages}</span>
+                        </form>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNextPage} disabled={activePage >= numPages}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <div className="hidden sm:block w-px h-6 bg-border mx-2" />
 
                     <div className="flex items-center gap-1 bg-muted/50 rounded-md border p-0.5">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} disabled={currentScale <= 0.5}>
                             <ZoomOut className="h-4 w-4" />
                         </Button>
-                        <span className="text-xs w-12 text-center font-medium tabular-nums">{Math.round(currentScale * 100)}%</span>
+                        <span className="text-xs w-10 text-center font-medium tabular-nums hidden sm:inline-block">{Math.round(currentScale * 100)}%</span>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} disabled={currentScale >= 3.0}>
                             <ZoomIn className="h-4 w-4" />
                         </Button>
                     </div>
 
-                    <div className="flex-1 text-center font-medium text-sm truncate">
+                    <div className="flex items-center gap-1 bg-muted/50 rounded-md border p-0.5 ml-2">
+                        <Button
+                            variant={isDoublePage ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={toggleDoublePage}
+                            className="text-xs gap-2 px-2 h-8"
+                            title={isDoublePage ? "Vue simple" : "Vue double page"}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-book-open"
+                            >
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                            <span className="hidden sm:inline">{isDoublePage ? "Double" : "Simple"}</span>
+                        </Button>
+                    </div>
+
+                    <div className="flex-1 text-center font-medium text-sm truncate ml-4 hidden md:block">
                         {agencyName} - {newspaper?.issueNumber}
                     </div>
 
-                    <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-                        {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                    </Button>
-                    <ThemeToggle />
+                    <div className="flex items-center gap-1 ml-auto">
+                        <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+                            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                        </Button>
+                        <ThemeToggle />
+                    </div>
                 </header>
 
                 <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center">
-                    <div className="flex flex-col items-center">
-                        {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
-                            <div key={pageNum} id={`pdf-page-${pageNum}`} className="w-full flex justify-center">
-                                <PdfPage
-                                    pdfDocument={pdfDocument}
-                                    pageNum={pageNum}
-                                    scale={currentScale}
-                                    watermark={watermark}
-                                    onInView={handlePageInView}
-                                />
+                    <div className="flex flex-col items-center gap-4 pb-10">
+                        {spreads.map((spread, index) => (
+                            <div
+                                key={`spread-${index}`}
+                                className={cn(
+                                    "flex justify-center items-center transition-all duration-300",
+                                    isDoublePage && spread.length > 1 ? "gap-4" : ""
+                                )}
+                            >
+                                {spread.map((pageNum) => (
+                                    <div key={pageNum} id={`pdf-page-${pageNum}`} className="relative">
+                                        <PdfPage
+                                            pdfDocument={pdfDocument}
+                                            pageNum={pageNum}
+                                            scale={currentScale}
+                                            watermark={watermark}
+                                            onInView={handlePageInView}
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>

@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { cron } from "@elysiajs/cron";
+
 import { NewspapersController } from "@/server/controllers/newspapers.controller";
 import { Status } from "@/server/models/newspaper.model";
 import { generatePdfToken } from "@/lib/token-generate";
@@ -8,21 +8,32 @@ import { betterAuthPlugin } from "@/lib/plugins/better-auth-plugin";
 export const newspapersService = new Elysia({ prefix: "/newspapers" })
     .use(betterAuthPlugin)
     // Cron job: Publish all draft newspapers daily at 4:00 AM
-    .use(
-        cron({
-            name: "publish_draft_newspapers",
-            pattern: "0 4 * * *", // Every day at 4:00 AM
-            async run() {
-                console.log("[Cron] Démarrage de la tâche de publication automatique à 4h00");
-                try {
-                    const result = await NewspapersController.publishAllDraftNewspapers();
-                    console.log(`[Cron] Tâche terminée. Journaux publiés: ${result.publishedCount}`);
-                } catch (error) {
-                    console.error("[Cron] Erreur lors de l'exécution de la tâche de publication:", error);
-                }
+    // Cron job: Publish all draft newspapers (Called by Vercel Cron)
+    .get(
+        "/cron/publish-drafts",
+        async ({ request, set }) => {
+            // Sécurisation via CRON_SECRET (envoyé par Vercel)
+            const authHeader = request.headers.get("Authorization");
+            const cronSecret = process.env.CRON_SECRET;
+
+            // Si un secret est configuré, on vérifie qu'il correspond
+            if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+                set.status = 401;
+                return { success: false, error: "Unauthorized" };
+            }
+
+            console.log("[Cron] Démarrage de la tâche de publication automatique (via HTTP)");
+            return await NewspapersController.publishAllDraftNewspapers();
+        },
+        {
+            detail: {
+                tags: ["System"],
+                summary: "Publier les brouillons (Cron)",
+                description: "Endpoint appelé par Vercel Cron pour publier les brouillons",
             },
-        })
+        }
     )
+
     // Get all published newspapers (public)
     .get(
         "/all-published",

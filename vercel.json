@@ -5,7 +5,7 @@
   "crons": [
     {
       "path": "/api/v1/newspapers/cron/publish-drafts",
-      "schedule": "* * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }

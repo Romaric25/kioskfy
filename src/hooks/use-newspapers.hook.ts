@@ -2,6 +2,18 @@ import { client } from "@/lib/client"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { NewspaperResponse, UpdateNewspaper, CreateNewspaper, Status } from "@/server/models/newspaper.model"
 
+
+// Hook for published newspapers and magazines (public)
+export const usePublishedNewspapersAndMagazines = () => {
+    const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
+        queryKey: ['newspapers-published-and-magazines'],
+        queryFn: () => client.api.v1.newspapers["all-published"].get()
+    })
+    const newspapersAndMagazines = data?.data;
+
+    return { newspapersAndMagazines, newspapersLoading, newspapersError }
+}
+
 // Hook for published newspapers (public)
 export const usePublishedNewspapers = () => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({

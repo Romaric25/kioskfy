@@ -45,7 +45,20 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
-
+    // Get all published newspapers and magazines (public)
+    .get(
+        "/all-published",
+        async () => {
+            return await NewspapersController.getPublishedNewspapersAndMagazines();
+        },
+        {
+            detail: {
+                tags: ["Public"],
+                summary: "Récupérer les journaux et magazines publiés",
+                description: "Retourne tous les journaux publiés avec leurs relations (catégories, organisation, pays, etc.)",
+            },
+        }
+    )
     // Get all published newspapers (public)
     .get(
         "/all-published-newspapers",

@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { authClient } from "@/lib/auth-client";
+import { authClient, getErrorMessage } from "@/lib/auth-client";
 import { registerSchema, type RegisterUser } from "@/server/models/user.model";
 
 import toast from "react-hot-toast";
@@ -68,19 +68,20 @@ export function RegisterForm() {
         lastName: data.lastName,
         phone: data.phone || "",
         image: undefined,
-        callbackURL: "/login",
       },
       {
         onError: (ctx) => {
-          if (ctx.error.status === 422) {
-            setRegisterError("Un compte avec cet email ou numéro de téléphone existe déjà");
-          } else {
-            setRegisterError(ctx.error.message || "Une erreur est survenue lors de l'inscription");
-          }
+          const translatedError = getErrorMessage(ctx.error.code ?? "", "fr");
+          const error = translatedError || ctx.error.message || "Une erreur est survenue lors de l'inscription.";
+          setRegisterError(error);
           setIsLoading(false);
         },
-        onSuccess: () => {
-          router.push(redirect ?? "/login?registered=true");
+        onSuccess: async () => {
+          await authClient.signIn.email({
+            email: data.email,
+            password: data.password,
+          });
+          router.push(redirect ?? "/");
           setIsLoading(false);
           toast.success("Compte créé avec succès");
         },

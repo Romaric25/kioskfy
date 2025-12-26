@@ -392,7 +392,7 @@ export const SettingsOrganization = () => {
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-shrink-0">
                     <div className="space-y-4">
-                      <Label className="text-base">Logo de l'agence</Label>
+                      <Label className="text-base">Logo de l'agence <span className="text-red-500">*</span></Label>
                       <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-muted/20">
                         <div className="relative">
                           <Avatar className="h-32 w-32 border-4 border-background shadow-sm">
@@ -782,15 +782,6 @@ export const SettingsOrganization = () => {
                                               : "opacity-0"
                                           )}
                                         />
-                                        {React.createElement(
-                                          getCategoryIcon(category.name),
-                                          {
-                                            className: cn(
-                                              "h-4 w-4 mr-2",
-                                              category.color
-                                            ),
-                                          }
-                                        )}
                                         {category.name}
                                       </CommandItem>
                                     ))}
@@ -820,15 +811,6 @@ export const SettingsOrganization = () => {
                                       );
                                     }}
                                   >
-                                    {React.createElement(
-                                      getCategoryIcon(category.name),
-                                      {
-                                        className: cn(
-                                          "h-3 w-3 mr-1",
-                                          category.color
-                                        ),
-                                      }
-                                    )}
                                     {category.name}
                                     <X className="ml-1 h-3 w-3" />
                                   </Badge>

@@ -311,3 +311,58 @@ export const useIsCompletedOrganization = () => {
     organisation,
   };
 };
+
+/**
+ * Interface for public agency data
+ */
+export interface PublicAgency {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+  country: string;
+  description: string;
+  metadata: Record<string, unknown> | string | null;
+  logoUpload?: {
+    id: number;
+    filename: string;
+    thumbnailUrl: string;
+  } | null;
+}
+
+/**
+ * Hook pour récupérer toutes les agences publiques (pour l'affichage sur la homepage)
+ */
+export const useAllAgencies = () => {
+  const {
+    data: agenciesResponse,
+    isLoading: isLoadingAgencies,
+    error: errorAgencies,
+  } = useQuery({
+    queryKey: ["agencies-public"],
+    queryFn: async () => {
+      const result = await client.api.v1.organizations.get();
+      return result.data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - données publiques, peuvent être cachées plus longtemps
+  });
+
+  // Filter only agencies with isActive metadata
+  const agencies = (agenciesResponse?.data || []).filter((org) => {
+    if (!org.metadata) return false;
+    try {
+      const meta = typeof org.metadata === 'string'
+        ? JSON.parse(org.metadata)
+        : org.metadata;
+      return meta?.isActive === true;
+    } catch {
+      return false;
+    }
+  }) as PublicAgency[];
+
+  return {
+    agencies,
+    isLoadingAgencies,
+    errorAgencies,
+  };
+};

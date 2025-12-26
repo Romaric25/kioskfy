@@ -40,7 +40,7 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                                     {newspaper.country?.flag && (
                                         <Image src={newspaper.country.flag} alt={newspaper.country?.name || "Pays"} width={16} height={16} className="rounded-full object-cover" />
                                     )}
-                                    <span className="font-medium text-xs text-foreground/80">{newspaper.country?.code}</span>
+                                    <span className="font-medium text-xs text-foreground/80">{newspaper.country?.name}</span>
                                 </Badge>
                             </div>
 

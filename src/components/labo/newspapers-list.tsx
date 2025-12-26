@@ -20,7 +20,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useNewspapersByOrganization, useUpdateNewspaper } from "@/hooks/use-newspapers.hook";
+import { useNewspapersByOrganization, useUpdateNewspaper, useUpdateNewspaperStatus } from "@/hooks/use-newspapers.hook";
 
 import { Badge } from "@/components/ui/badge";
 import { priceFormatter, formatDate } from "@/lib/helpers";
@@ -82,6 +82,8 @@ export function NewspapersList() {
     const { newspapers, newspapersLoading } = useNewspapersByOrganization(organizationId);
     const { updateNewspaper, isUpdatingNewspaper, isUpdatingNewspaperSuccess } =
         useUpdateNewspaper();
+    const { updateNewspaperStatus, isUpdatingNewspaperStatus, isUpdatingNewspaperStatusSuccess } =
+        useUpdateNewspaperStatus();
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -102,11 +104,11 @@ export function NewspapersList() {
     };
 
     useEffect(() => {
-        if (isUpdatingNewspaperSuccess) {
+        if (isUpdatingNewspaperStatusSuccess) {
             toast.success("Statut mis à jour avec succès");
             closeConfirmDialog();
         }
-    }, [isUpdatingNewspaperSuccess]);
+    }, [isUpdatingNewspaperStatusSuccess]);
 
     const handleEditNewspaper = (newspaper: NewspaperResponse) => {
         setEditingNewspaper(newspaper);
@@ -137,12 +139,13 @@ export function NewspapersList() {
 
     const handleStatusChange = async (id: string, newStatus: Status) => {
         try {
-            await updateNewspaper({
-                id: Number(id),
-                data: { status: newStatus },
+            const result = await updateNewspaperStatus({
+                id: id,
+                status: newStatus,
             });
-
+            console.log("Status update result:", result);
         } catch (error) {
+            console.error("Status update error:", error);
             toast.error("Erreur lors de la mise à jour du statut");
         }
     };
@@ -261,22 +264,21 @@ export function NewspapersList() {
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Modifier
                                 </DropdownMenuItem>
-                                {newspaper.status === Status.DRAFT && (
-                                    <DropdownMenuItem
-                                        onClick={() =>
-                                            openConfirmDialog(
-                                                newspaper.id,
-                                                Status.PUBLISHED,
-                                                "publish"
-                                            )
-                                        }
-                                        disabled={isUpdatingNewspaper}
-                                        className="text-green-600 focus:text-green-700 focus:bg-green-50"
-                                    >
-                                        <Globe className="mr-2 h-4 w-4" />
-                                        Publier
-                                    </DropdownMenuItem>
-                                )}
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        openConfirmDialog(
+                                            newspaper.id,
+                                            Status.PUBLISHED,
+                                            "publish"
+                                        )
+                                    }
+                                    disabled={isUpdatingNewspaperStatus || newspaper.status === Status.PUBLISHED}
+                                    className="text-green-600 focus:text-green-700 focus:bg-green-50"
+                                >
+                                    <Globe className="mr-2 h-4 w-4" />
+                                    Publier
+                                </DropdownMenuItem>
+
                                 <DropdownMenuItem
                                     onClick={() =>
                                         openConfirmDialog(
@@ -286,7 +288,7 @@ export function NewspapersList() {
                                         )
                                     }
                                     disabled={
-                                        newspaper.status === Status.ARCHIVED || isUpdatingNewspaper
+                                        newspaper.status === Status.ARCHIVED || isUpdatingNewspaperStatus
                                     }
                                     className="text-orange-600 focus:text-orange-700 focus:bg-orange-50"
                                 >
@@ -302,7 +304,7 @@ export function NewspapersList() {
     ];
 
     const table = useReactTable({
-        data: newspapers?.data || [],
+        data: (newspapers?.data ?? []) as NewspaperResponse[],
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -448,19 +450,19 @@ export function NewspapersList() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isUpdatingNewspaper} onClick={closeConfirmDialog}>
+                        <AlertDialogCancel disabled={isUpdatingNewspaperStatus} onClick={closeConfirmDialog}>
                             Annuler
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmStatusChange}
-                            disabled={isUpdatingNewspaper}
+                            disabled={isUpdatingNewspaperStatus}
                             className={
                                 confirmAction?.actionType === "publish"
                                     ? "bg-green-600 hover:bg-green-700 text-white focus:ring-green-600"
                                     : "bg-orange-600 hover:bg-orange-700 text-white focus:ring-orange-600"
                             }
                         >
-                            {isUpdatingNewspaper ? (
+                            {isUpdatingNewspaperStatus ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Mise à jour...

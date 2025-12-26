@@ -12,17 +12,8 @@ import { cn } from "@/lib/utils";
 
 
 import toast from "react-hot-toast";
-import { useVerifyEmail } from "@/hooks";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { useConfirmEmail } from "@/hooks";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useResendToken } from "@/hooks";
 interface EmailVerificationProps {
   className?: string;
@@ -35,14 +26,13 @@ export function EmailVerification({ className }: EmailVerificationProps) {
     useState<boolean>(false);
 
 
-  const { verifyEmail, isVerifyingEmail, isVerifyingEmailSuccess } =
-    useVerifyEmail();
+  const { confirmEmail, isConfirmingEmail, isConfirmingEmailSuccess } =
+    useConfirmEmail();
   const { resendToken, isResendingToken, isResendingTokenSuccess } =
     useResendToken();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
-  const [isResendDialogOpen, setIsResendDialogOpen] = useState<boolean>(false);
-  const [resendEmail, setResendEmail] = useState<string>("");
+
   const token = searchParams.get("token");
 
   const handleVerification = useCallback(async () => {
@@ -51,9 +41,7 @@ export function EmailVerification({ className }: EmailVerificationProps) {
       return;
     }
     try {
-      const response = await verifyEmail(token);
-      console.log("Data verifying email:", response);
-
+      const response = await confirmEmail(token);
       // Treaty client returns { data, error } structure
       if (response.error) {
         setIsError(true);
@@ -72,19 +60,14 @@ export function EmailVerification({ className }: EmailVerificationProps) {
       setIsError(true);
       setErrorMessage("Une erreur inattendue s'est produite.");
     }
-  }, [token, verifyEmail]);
+  }, [token, confirmEmail]);
 
   const handleResendVerificationEmail = async () => {
-    if (!resendEmail) {
-      toast.error("Veuillez entrer une adresse email");
-      return;
-    }
+    if (!token) return;
 
     try {
-      await resendToken(resendEmail);
+      await resendToken({ token });
       toast.success("Email de vérification envoyé avec succès !");
-      setIsResendDialogOpen(false);
-      setResendEmail("");
     } catch (error) {
       toast.error("Erreur lors de l'envoi de l'email de vérification");
       console.error("Resend error:", error);
@@ -98,11 +81,11 @@ export function EmailVerification({ className }: EmailVerificationProps) {
   }, [token, handleVerification]);
 
   const handleGoToLogin = () => {
-    router.push("/");
+    router.push("/organization/login");
   };
 
   const renderContent = () => {
-    if (isVerifyingEmail) {
+    if (isConfirmingEmail) {
       return (
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-brand-primary mx-auto mb-4"></div>
@@ -127,17 +110,25 @@ export function EmailVerification({ className }: EmailVerificationProps) {
           </p>
           <div className="space-y-3">
             <Button
-              onClick={() => setIsResendDialogOpen(true)}
+              onClick={handleResendVerificationEmail}
               className="w-full"
+              disabled={isResendingToken}
             >
-              Renvoyer un nouveau lien
+              {isResendingToken ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                "Renvoyer un nouveau lien"
+              )}
             </Button>
           </div>
         </div>
       );
     }
 
-    if (isVerifyingEmailSuccess || isUpdatingUserActive) {
+    if (isConfirmingEmailSuccess || isUpdatingUserActive) {
       return (
         <div className="text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -194,68 +185,6 @@ export function EmailVerification({ className }: EmailVerificationProps) {
           </div>
         )}
       </div>
-
-      {/* Resend Email Dialog */}
-      <Dialog open={isResendDialogOpen} onOpenChange={setIsResendDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Renvoyer l'email de vérification</DialogTitle>
-            <DialogDescription>Entrez votre adresse email pour recevoir un nouveau lien de vérification.</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="resend-email"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Adresse email
-              </label>
-              <Input
-                id="resend-email"
-                type="email"
-                placeholder="exemple@email.com"
-                value={resendEmail}
-                onChange={(e) => setResendEmail(e.target.value)}
-                className="w-full"
-                disabled={isResendingToken}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsResendDialogOpen(false);
-                setResendEmail("");
-              }}
-              disabled={isResendingToken}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="button"
-              onClick={handleResendVerificationEmail}
-              disabled={isResendingToken || !resendEmail}
-              className=""
-            >
-              {isResendingToken ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi...
-                </>
-              ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Envoyer
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export interface NewspaperResponse {
     issueNumber: string;
     publishDate: Date;
     coverImage: string;
-    price: string;
+    price: string | number;
     pdf: string;
     status: "published" | "draft" | "pending" | "archived";
     createdAt: Date;
@@ -46,7 +46,9 @@ export interface NewspaperResponse {
         name: string;
         slug: string;
         icon: string;
-        color: string | null;
+        color?: string | null;
+        createdAt?: Date;
+        updatedAt?: Date;
     }[];
     organization?: {
         id: string;
@@ -76,7 +78,7 @@ export interface NewspaperListItem {
     issueNumber: string;
     publishDate: Date;
     coverImage: string;
-    price: string;
+    price: string | number;
     pdf: string;
     status: "published" | "draft" | "pending" | "archived";
     createdAt: Date;

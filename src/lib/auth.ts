@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import { ac, admin, editor, member, owner, superadmin, user as userRole } from "@/lib/permissions";
@@ -19,46 +20,51 @@ export const auth = betterAuth({
     basePath: '/api/auth',
     trustedOrigins: [
         "http://localhost:3000",
-        "*.kioskfy.com",          
-        "https://*.kioskfy.com", 
+        "*.kioskfy.com",
+        "https://*.kioskfy.com",
     ],
     database: drizzleAdapter(db, {
         provider: "mysql",
     }),
+    databaseHooks: {
+        session: {
+            create: {
+                before: async (session) => {
+                    // Récupérer l'utilisateur pour vérifier son type et son statut de vérification d'email
+                    const [user] = await db
+                        .select()
+                        .from(userTable)
+                        .where(eq(userTable.id, session.userId))
+                        .limit(1);
+
+                    if (!user) {
+                        return { data: session };
+                    }
+
+                    // Vérifier si l'utilisateur est une agence et si l'email n'est pas vérifié
+                    if (user.typeUser === 'agency' && !user.emailVerified) {
+                        throw new APIError("FORBIDDEN", {
+                            message: "Veuillez vérifier votre adresse email avant de vous connecter.",
+                        });
+                    }
+
+                    return { data: session };
+                },
+            },
+        },
+    },
     rateLimit: {
         enabled: true,
         storage: 'database',
         window: 10, // time window in seconds
         max: 50, // max requests in the window
     },
-    emailVerification: {
-        sendVerificationEmail: async ({ user, url, token }) => {
-            const extendedUser = user as typeof userTable.$inferSelect;
-            const isAgency = extendedUser.typeUser === 'agency';
-            const agencyVerificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/organization/subscription/verify-email?token=${token}`;
-            const clientVerificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
-            const emailHtml = await render(
-                isAgency ?
-                    VerificationAgencyEmail({
-                        lastName: extendedUser.lastName,
-                        verificationUrl: agencyVerificationUrl,
-                    }) :
-                    VerificationClientEmail({
-                        lastName: extendedUser.lastName,
-                        verificationUrl: clientVerificationUrl,
-                    })
-            );
-            void sendEmail({
-                to: user.email,
-                subject: "Veuillez vérifier votre adresse email",
-                html: emailHtml,
-            })
-        }
-    },
+    // emailVerification géré manuellement dans UsersController.createPartnership
     emailAndPassword: {
         enabled: true,
-        autoSignIn: true,
-        //requireEmailVerification: true,
+        autoSignIn: false, // Désactivé pour permettre l'envoi d'email de vérification
+        requireEmailVerification: false,
+        sendVerificationEmailOnSignUp: false, // Désactivé car géré manuellement
         password: {
             hash: hashPassword,
             verify: verifyPassword,
@@ -238,21 +244,7 @@ export const auth = betterAuth({
                 member,
             },
         }),
-        emailOTP({
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/require-await
-            async sendVerificationOTP({ email, otp, type }) {
-                if (type === 'sign-in') {
-                    // Send the OTP for sign in
-                    // TODO: Implement email sending logic using email and otp
-                } else if (type === 'email-verification') {
-                    // Send the OTP for email verification
-                    // TODO: Implement email sending logic using email and otp
-                } else {
-                    // Send the OTP for password reset
-                    // TODO: Implement email sending logic using email and otp
-                }
-            },
-        }),
+        // emailOTP plugin removed to avoid conflict with link-based verification
     ],
 });
 

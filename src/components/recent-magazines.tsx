@@ -1,48 +1,39 @@
-import { MagazineCard } from "./magazine-card";
-import { Section } from "./ui/section";
+"use client";
 
-const recentMagazines = [
-    {
-        title: "Forbes Afrique",
-        date: "Nov 2025",
-        price: "3000 FCFA",
-        category: "Business",
-        coverImage: "/placeholder.jpg",
-    },
-    {
-        title: "Amina",
-        date: "Nov 2025",
-        price: "2000 FCFA",
-        category: "Mode",
-        coverImage: "/placeholder.jpg",
-    },
-    {
-        title: "So Foot",
-        date: "Nov 2025",
-        price: "2500 FCFA",
-        category: "Sport",
-        coverImage: "/placeholder.jpg",
-    },
-    {
-        title: "Science & Vie",
-        date: "Nov 2025",
-        price: "2800 FCFA",
-        category: "Science",
-        coverImage: "/placeholder.jpg",
-    },
-];
+import { NewspaperCard } from "./newspaper-card";
+import { Section } from "./ui/section";
+import { usePublishedMagazines } from "@/hooks/use-newspapers.hook";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function RecentMagazines() {
+    const { magazines, magazinesLoading } = usePublishedMagazines();
+
     return (
         <Section
             title="Magazines récemment sortis"
             description="Découvrez les magazines les plus récemment sortis."
             action={{ label: "Voir tout", href: "/magazines" }}
         >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:gap-8">
-                {recentMagazines.map((mag, i) => (
-                    <MagazineCard key={i} {...mag} />
-                ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {magazinesLoading ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="space-y-4">
+                            <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-[70%]" />
+                                <Skeleton className="h-4 w-[40%]" />
+                            </div>
+                        </div>
+                    ))
+                ) : magazines && magazines.data && magazines.data.length > 0 ? (
+                    magazines.data.slice(0, 6).map((magazine) => (
+                        <NewspaperCard key={magazine.id} newspaper={magazine} />
+                    ))
+                ) : (
+                    <div className="col-span-full py-8 text-center text-muted-foreground">
+                        Aucun magazine disponible pour le moment.
+                    </div>
+                )}
             </div>
         </Section>
     );

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PartnershipRegisterUser } from "@/server/models/user.model";
 import { client } from "@/lib/client";
+import { translateErrorMessage } from "@/lib/auth-client";
 
 
 /**
@@ -19,7 +20,18 @@ export const useCreatePartnership = () => {
       const result = await client.api.v1.users.partnership.post(data);
 
       if (result.error) {
-        throw new Error(String(result.error.value) || "Erreur lors de la création du compte partenaire");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorValue = result.error.value as any;
+        // L'erreur peut venir de plusieurs structures:
+        // 1. Backend retourne { success: false, error: "message" }
+        // 2. Eden retourne { message: "..." }
+        // 3. Erreur brute string
+        const errorMessage =
+          errorValue?.error ||  // Backend structure
+          errorValue?.message || // Eden structure
+          (typeof errorValue === 'string' ? errorValue : null) ||
+          "Erreur lors de la création du compte partenaire";
+        throw new Error(translateErrorMessage(errorMessage));
       }
 
       const responseData = result.data;

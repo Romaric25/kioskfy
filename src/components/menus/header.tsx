@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Activity, useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -40,7 +40,7 @@ import {
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
-
+  const isAgency = user?.typeUser === "agency";
   const { items, removeItem, total } = useCartStore();
   const cartCount = items.length;
 
@@ -182,11 +182,12 @@ export function Header() {
                 </Popover>
 
                 {/* Auth */}
-                {isAuthenticated ? (
+              
+                <Activity mode={isAuthenticated ? "visible" : "hidden"}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-muted/50">
-                        <Avatar className="h-9 w-9 border border-border/50">
+                        <Avatar className="h-9 w-9 border border-border/50 rounded-full">
                           <AvatarFallback className="bg-primary/10 text-primary font-bold flex items-center justify-center w-full h-full rounded-full text-xs">
                             {((user?.lastName?.charAt(0) ?? "") + (user?.name?.charAt(0) ?? "")).toUpperCase()}
                           </AvatarFallback>
@@ -201,6 +202,15 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <Activity mode={isAgency ? "visible" : "hidden"}>
+                        <DropdownMenuItem asChild>
+                          <Link href="/organization/dashboard" className="cursor-pointer font-medium">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Mon agence</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </Activity>
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard" className="cursor-pointer font-medium">
                           <User className="mr-2 h-4 w-4" />
@@ -214,13 +224,16 @@ export function Header() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : (
+                </Activity>
+              
+                <Activity mode={isAuthenticated ? "hidden" : "visible"}>
                   <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-muted/50" asChild>
                     <Link href="/login">
                       <User className="h-5 w-5" />
                     </Link>
                   </Button>
-                )}
+                </Activity>
+               
 
                 <div className="mx-1">
                   <ThemeToggle />
@@ -254,7 +267,6 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
       {/* Mobile Menu */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="right" className="p-0 border-l border-border/40 bg-background/95 backdrop-blur-xl w-[320px] sm:w-[380px]">
@@ -292,7 +304,7 @@ export function Header() {
                   <h4 className="text-xs font-semibold text-muted-foreground mb-3 px-2 uppercase tracking-wider">Explorer</h4>
 
                   <Link
-                    href="/journaux"
+                    href="/newspapers"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/60 transition-colors group"
                   >
@@ -323,8 +335,8 @@ export function Header() {
                 {/* Account Routes */}
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-muted-foreground mb-3 px-2 uppercase tracking-wider">Mon Compte</h4>
-
-                  {isAuthenticated ? (
+          
+                  <Activity mode={isAuthenticated ? "visible" : "hidden"}> 
                     <Link
                       href="/dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -338,13 +350,16 @@ export function Header() {
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                     </Link>
-                  ) : (
+                  </Activity>
+              
+                  <Activity mode={isAuthenticated ? "hidden" : "visible"}>
                     <div className="px-2">
                       <Button className="w-full rounded-full shadow-md" onClick={() => setIsMobileMenuOpen(false)} asChild>
                         <Link href="/login">Se connecter</Link>
                       </Button>
                     </div>
-                  )}
+                  </Activity>
+                 
                 </div>
 
                 {/* Partnership */}
@@ -376,7 +391,7 @@ export function Header() {
                 <ThemeToggle />
               </div>
 
-              {isAuthenticated && (
+              <Activity mode={isAuthenticated ? "visible" : "hidden"}>
                 <Button
                   variant="ghost"
                   className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 justify-start"
@@ -388,7 +403,7 @@ export function Header() {
                   <LogOut className="h-4 w-4" />
                   Se déconnecter
                 </Button>
-              )}
+              </Activity>
             </div>
           </div>
         </SheetContent>

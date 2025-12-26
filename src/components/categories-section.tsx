@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useCategories } from "@/hooks/use-categories.hook";
-import { getCategoryIcon } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import {
@@ -16,76 +15,66 @@ import { cn } from "@/lib/utils";
 
 // Configuration des styles par couleur
 const categoryStyles: Record<string, {
-  iconBg: string;
-  iconColor: string;
-  borderColor: string;
-  shadowColor: string;
-  glowColor: string;
+  bg: string;
+  text: string;
+  border: string;
+  hoverBg: string;
 }> = {
   "text-blue-500": {
-    iconBg: "bg-blue-100 dark:bg-blue-900/30",
-    iconColor: "text-blue-600 dark:text-blue-400",
-    borderColor: "group-hover:border-blue-200 dark:group-hover:border-blue-800",
-    shadowColor: "group-hover:shadow-blue-200/50 dark:group-hover:shadow-blue-900/10",
-    glowColor: "group-hover:from-blue-500/10",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-200 dark:border-blue-800",
+    hoverBg: "hover:bg-blue-100 dark:hover:bg-blue-900/50",
   },
   "text-green-500": {
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
-    borderColor: "group-hover:border-emerald-200 dark:group-hover:border-emerald-800",
-    shadowColor: "group-hover:shadow-emerald-200/50 dark:group-hover:shadow-emerald-900/10",
-    glowColor: "group-hover:from-emerald-500/10",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    text: "text-emerald-700 dark:text-emerald-300",
+    border: "border-emerald-200 dark:border-emerald-800",
+    hoverBg: "hover:bg-emerald-100 dark:hover:bg-emerald-900/50",
   },
   "text-orange-500": {
-    iconBg: "bg-orange-100 dark:bg-orange-900/30",
-    iconColor: "text-orange-600 dark:text-orange-400",
-    borderColor: "group-hover:border-orange-200 dark:group-hover:border-orange-800",
-    shadowColor: "group-hover:shadow-orange-200/50 dark:group-hover:shadow-orange-900/10",
-    glowColor: "group-hover:from-orange-500/10",
+    bg: "bg-orange-50 dark:bg-orange-950/40",
+    text: "text-orange-700 dark:text-orange-300",
+    border: "border-orange-200 dark:border-orange-800",
+    hoverBg: "hover:bg-orange-100 dark:hover:bg-orange-900/50",
   },
   "text-purple-500": {
-    iconBg: "bg-purple-100 dark:bg-purple-900/30",
-    iconColor: "text-purple-600 dark:text-purple-400",
-    borderColor: "group-hover:border-purple-200 dark:group-hover:border-purple-800",
-    shadowColor: "group-hover:shadow-purple-200/50 dark:group-hover:shadow-purple-900/10",
-    glowColor: "group-hover:from-purple-500/10",
+    bg: "bg-purple-50 dark:bg-purple-950/40",
+    text: "text-purple-700 dark:text-purple-300",
+    border: "border-purple-200 dark:border-purple-800",
+    hoverBg: "hover:bg-purple-100 dark:hover:bg-purple-900/50",
   },
   "text-cyan-500": {
-    iconBg: "bg-cyan-100 dark:bg-cyan-900/30",
-    iconColor: "text-cyan-600 dark:text-cyan-400",
-    borderColor: "group-hover:border-cyan-200 dark:group-hover:border-cyan-800",
-    shadowColor: "group-hover:shadow-cyan-200/50 dark:group-hover:shadow-cyan-900/10",
-    glowColor: "group-hover:from-cyan-500/10",
+    bg: "bg-cyan-50 dark:bg-cyan-950/40",
+    text: "text-cyan-700 dark:text-cyan-300",
+    border: "border-cyan-200 dark:border-cyan-800",
+    hoverBg: "hover:bg-cyan-100 dark:hover:bg-cyan-900/50",
   },
   "text-red-500": {
-    iconBg: "bg-rose-100 dark:bg-rose-900/30",
-    iconColor: "text-rose-600 dark:text-rose-400",
-    borderColor: "group-hover:border-rose-200 dark:group-hover:border-rose-800",
-    shadowColor: "group-hover:shadow-rose-200/50 dark:group-hover:shadow-rose-900/10",
-    glowColor: "group-hover:from-rose-500/10",
+    bg: "bg-rose-50 dark:bg-rose-950/40",
+    text: "text-rose-700 dark:text-rose-300",
+    border: "border-rose-200 dark:border-rose-800",
+    hoverBg: "hover:bg-rose-100 dark:hover:bg-rose-900/50",
   },
   "text-pink-500": {
-    iconBg: "bg-pink-100 dark:bg-pink-900/30",
-    iconColor: "text-pink-600 dark:text-pink-400",
-    borderColor: "group-hover:border-pink-200 dark:group-hover:border-pink-800",
-    shadowColor: "group-hover:shadow-pink-200/50 dark:group-hover:shadow-pink-900/10",
-    glowColor: "group-hover:from-pink-500/10",
+    bg: "bg-pink-50 dark:bg-pink-950/40",
+    text: "text-pink-700 dark:text-pink-300",
+    border: "border-pink-200 dark:border-pink-800",
+    hoverBg: "hover:bg-pink-100 dark:hover:bg-pink-900/50",
   },
   "text-sky-500": {
-    iconBg: "bg-sky-100 dark:bg-sky-900/30",
-    iconColor: "text-sky-600 dark:text-sky-400",
-    borderColor: "group-hover:border-sky-200 dark:group-hover:border-sky-800",
-    shadowColor: "group-hover:shadow-sky-200/50 dark:group-hover:shadow-sky-900/10",
-    glowColor: "group-hover:from-sky-500/10",
+    bg: "bg-sky-50 dark:bg-sky-950/40",
+    text: "text-sky-700 dark:text-sky-300",
+    border: "border-sky-200 dark:border-sky-800",
+    hoverBg: "hover:bg-sky-100 dark:hover:bg-sky-900/50",
   },
 };
 
 const defaultStyles = {
-  iconBg: "bg-muted",
-  iconColor: "text-muted-foreground",
-  borderColor: "group-hover:border-border",
-  shadowColor: "group-hover:shadow-muted/50",
-  glowColor: "group-hover:from-gray-500/10",
+  bg: "bg-muted/50",
+  text: "text-foreground",
+  border: "border-border",
+  hoverBg: "hover:bg-muted",
 };
 
 export function CategoriesSection() {
@@ -97,16 +86,13 @@ export function CategoriesSection() {
 
   if (categoriesLoading) {
     return (
-      <div className="w-full px-4">
-        <div className="flex gap-4 overflow-hidden mask-fade-sides">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div
+      <div className="w-full container mx-auto px-4 md:px-6 py-4">
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <Skeleton
               key={index}
-              className="flex-shrink-0 w-[140px] h-[160px] flex flex-col items-center justify-center p-4 bg-card border rounded-3xl gap-4"
-            >
-              <Skeleton className="h-16 w-16 rounded-2xl" />
-              <Skeleton className="h-4 w-20" />
-            </div>
+              className="h-9 w-24 rounded-full flex-shrink-0"
+            />
           ))}
         </div>
       </div>
@@ -120,7 +106,7 @@ export function CategoriesSection() {
   }
 
   return (
-    <div className="w-full relative group/carousel">
+    <div className="w-full relative group/carousel container mx-auto px-4 md:px-6 py-4">
       <Carousel
         opts={{
           align: "start",
@@ -130,69 +116,36 @@ export function CategoriesSection() {
         plugins={[plugin.current]}
         className="w-full"
       >
-        <CarouselContent className="-ml-3 pb-4">
-          {categoriesData.map((cat) => {
+        <CarouselContent className="-ml-2">
+          {categoriesData.map((cat, index) => {
             const styles = categoryStyles[cat.color || ""] || defaultStyles;
-            const Icon = getCategoryIcon(cat.name);
 
             return (
               <CarouselItem
                 key={cat.id}
-                className="pl-3 basis-[140px] sm:basis-[160px] md:basis-[180px]"
+                className="pl-2 basis-auto"
               >
                 <Link
                   href={`/categories/${cat.slug}`}
                   className={cn(
-                    "group relative flex flex-col items-center justify-between",
-                    "h-[160px] w-full p-5",
-                    "bg-card/50 hover:bg-card dark:bg-card/20 dark:hover:bg-card/40",
-                    "border border-border/50",
-                    "rounded-[2rem]",
-                    "transition-all duration-300 ease-out",
-                    "hover:-translate-y-1.5 hover:shadow-xl",
-                    styles.borderColor,
-                    styles.shadowColor
+                    "inline-flex items-center justify-center",
+                    "px-4 py-2",
+                    "text-sm font-medium whitespace-nowrap",
+                    "rounded-full",
+                    "border",
+                    "transition-all duration-200 ease-out",
+                    "hover:scale-105 hover:shadow-md",
+                    "active:scale-95",
+                    styles.bg,
+                    styles.text,
+                    styles.border,
+                    styles.hoverBg
                   )}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
                 >
-                  {/* Subtle Gradient Glow Background */}
-                  <div
-                    className={cn(
-                      "absolute inset-0 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                      "bg-gradient-to-b from-transparent to-transparent via-transparent",
-                      styles.glowColor
-                    )}
-                  />
-
-                  {/* Icon Container */}
-                  <div
-                    className={cn(
-                      "relative flex items-center justify-center",
-                      "w-16 h-16 rounded-2xl",
-                      "transition-all duration-300 group-hover:scale-110",
-                      "shadow-sm",
-                      styles.iconBg
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "h-8 w-8 transition-colors duration-300",
-                        styles.iconColor
-                      )}
-                    />
-                  </div>
-
-                  {/* Category Name */}
-                  <div className="relative z-10 flex flex-col items-center gap-1">
-                    <span className="text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors text-center leading-tight">
-                      {cat.name}
-                    </span>
-
-                    {/* Active dot indicator */}
-                    <div className={cn(
-                      "w-1 h-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0",
-                      styles.iconColor.replace('text-', 'bg-')
-                    )} />
-                  </div>
+                  {cat.name}
                 </Link>
               </CarouselItem>
             );
@@ -200,8 +153,8 @@ export function CategoriesSection() {
         </CarouselContent>
 
         <div className="hidden md:block opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
-          <CarouselPrevious className="-left-4 lg:-left-12 h-10 w-10 border-none bg-background/80 backdrop-blur shadow-md hover:bg-background" />
-          <CarouselNext className="-right-4 lg:-right-12 h-10 w-10 border-none bg-background/80 backdrop-blur shadow-md hover:bg-background" />
+          <CarouselPrevious className="-left-4 lg:-left-10 h-8 w-8 border-none bg-background/90 backdrop-blur shadow-md hover:bg-background" />
+          <CarouselNext className="-right-4 lg:-right-10 h-8 w-8 border-none bg-background/90 backdrop-blur shadow-md hover:bg-background" />
         </div>
       </Carousel>
     </div>

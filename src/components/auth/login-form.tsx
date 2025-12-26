@@ -30,6 +30,7 @@ export function LoginForm() {
         resolver: async (data) => {
             try {
                 await loginSchema.parseAsync(data);
+
                 return { values: data, errors: {} };
             } catch (error) {
                 if (error instanceof z.ZodError) {
@@ -70,10 +71,8 @@ export function LoginForm() {
             },
             {
                 onError: (ctx) => {
-                    const error = getErrorMessage(
-                        ctx.error.code,
-                        "fr"
-                    );
+                    const translatedError = getErrorMessage(ctx.error.code ?? "", "fr");
+                    const error = translatedError || ctx.error.message || "Une erreur est survenue lors de la connexion.";
                     setLoginError(error);
                     setIsLoading(false);
                 },

@@ -6,19 +6,20 @@ import { CountryCarousel } from '@/components/country-carousel';
 import { FeaturedNewspapers } from '@/components/featured-newspapers';
 import { RecentMagazines } from '@/components/recent-magazines';
 import { CategoriesSection } from '@/components/categories-section';
+import { AgenciesCarrousel } from '@/components/agencies-carrousel';
 
 export default function RootPage() {
     return (
         <>
             <Header />
             <Hero />
-            <Section title="">
-                <CategoriesSection />
-            </Section>
+         
+            <CategoriesSection />
+           
             <CountryCarousel />
             <FeaturedNewspapers />
             <RecentMagazines />
-
+            <AgenciesCarrousel />
             <Footer />
         </>
     )

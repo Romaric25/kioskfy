@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { randomBytes } from "crypto";
 
 /**
  * Secret key for JWT signing and verification
@@ -221,4 +222,14 @@ export async function verifyPdfToken(token: string): Promise<{ userId: string; n
     userId: payload.userId as string,
     newspaperId: payload.newspaperId as string,
   };
+}
+
+/**
+ * Generate a random token and expiration date for manual database verification
+ */
+export function generateRandomVerificationToken() {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 24); // 24h validity
+  return { token, expiresAt };
 }

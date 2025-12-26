@@ -9,17 +9,17 @@ import { Section } from "./ui/section";
 
 export function FeaturedNewspapers() {
   const { newspapers, newspapersLoading, newspapersError } = usePublishedNewspapers();
-  const featuredNewspapers = newspapers?.data?.slice(0, 4) || [];
+  const featuredNewspapers = newspapers?.data?.slice(0, 6) || [];
 
   return (
     <Section
       title="À la une aujourd'hui"
       description="Les journaux les plus lus ce matin en Afrique."
-      action={{ label: "Voir tout", href: "/journaux" }}
+      action={{ label: "Voir tout", href: "/newspapers" }}
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {newspapersLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 6 }).map((_, i) => (
             <NewspaperCardSkeleton key={i} />
           ))
         ) : newspapersError ? (

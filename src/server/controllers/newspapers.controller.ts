@@ -21,7 +21,7 @@ import { UploadsController } from "@/server/controllers/uploads.controller";
 
 export class NewspapersController {
     // Get all published newspapers with relations (for public)
-    static async getPublished() {
+    static async getPublishedNewspapers() {
         const publishedNewspapers = await db
             .select({
                 id: newspapers.id,
@@ -64,7 +64,9 @@ export class NewspapersController {
                 and(
                     eq(newspapers.status, Status.PUBLISHED),
                     // Check if organization metadata contains isActive: true
-                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    // Check if organization metadata contains type: "Journal"
+                    sql`JSON_UNQUOTE(JSON_EXTRACT(${organizations.metadata}, '$.type')) = 'Journal'`
                 )
             )
             .orderBy(desc(newspapers.publishDate));
@@ -97,6 +99,84 @@ export class NewspapersController {
         };
     }
 
+    // Get all published magazines with relations (for public)
+    static async getPublishedMagazines() {
+        const publishedNewspapers = await db
+            .select({
+                id: newspapers.id,
+                coverImage: newspapers.coverImage,
+                price: newspapers.price,
+                publishDate: newspapers.publishDate,
+                issueNumber: newspapers.issueNumber,
+                pdf: newspapers.pdf,
+                status: newspapers.status,
+                createdAt: newspapers.createdAt,
+                updatedAt: newspapers.updatedAt,
+                // Organization data
+                organization: {
+                    id: organizations.id,
+                    name: organizations.name,
+                    slug: organizations.slug,
+                    logo: organizations.logo,
+                    metadata: organizations.metadata,
+                },
+                // Country data
+                country: {
+                    id: countries.id,
+                    name: countries.name,
+                    slug: countries.slug,
+                    flag: countries.flag,
+                    code: countries.code,
+                },
+                // PDF Upload data
+                pdfUpload: {
+                    id: uploads.id,
+                    filename: uploads.filename,
+                    thumbnailUrl: uploads.thumbnailUrl,
+                },
+            })
+            .from(newspapers)
+            .leftJoin(organizations, eq(newspapers.organizationId, organizations.id))
+            .leftJoin(countries, eq(newspapers.countryId, countries.id))
+            .leftJoin(uploads, eq(newspapers.pdfUploadId, uploads.id))
+            .where(
+                and(
+                    eq(newspapers.status, Status.PUBLISHED),
+                    // Check if organization metadata contains isActive: true
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    // Check if organization metadata contains type: "Journal"
+                    sql`JSON_UNQUOTE(JSON_EXTRACT(${organizations.metadata}, '$.type')) = 'Magazine'`
+                )
+            )
+            .orderBy(desc(newspapers.publishDate));
+
+        // Fetch categories for each newspaper
+        const newspapersWithCategories = await Promise.all(
+            publishedNewspapers.map(async (newspaper) => {
+                const newspaperCategories = await db
+                    .select({
+                        id: categories.id,
+                        name: categories.name,
+                        slug: categories.slug,
+                        icon: categories.icon,
+                        color: categories.color,
+                    })
+                    .from(newspapersCategories)
+                    .innerJoin(categories, eq(newspapersCategories.categoriesId, categories.id))
+                    .where(eq(newspapersCategories.newspapersId, newspaper.id));
+
+                return {
+                    ...newspaper,
+                    categories: newspaperCategories,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            data: newspapersWithCategories,
+        };
+    }
     // Get all newspapers (admin)
     static async getAll() {
         const allNewspapers = await db
@@ -252,7 +332,8 @@ export class NewspapersController {
                 and(
                     eq(newspapers.countryId, countryId),
                     eq(newspapers.status, Status.PUBLISHED),
-                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.type') = 'Journal'`
                 )
             )
             .orderBy(desc(newspapers.publishDate));

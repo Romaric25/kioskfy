@@ -107,7 +107,6 @@ export function OrganizationForm() {
 
   useEffect(() => {
     if (isCreatingOrganizationSuccess) {
-      toast.success("Organisation créée avec succès !");
       form.reset();
       setOpen(false);
     }

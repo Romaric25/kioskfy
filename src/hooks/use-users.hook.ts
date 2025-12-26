@@ -4,15 +4,15 @@ import { client } from "@/lib/client";
 /**
  * Hook pour vérifier l'email d'un utilisateur
  */
-export const useVerifyEmail = () => {
+export const useConfirmEmail = () => {
     const {
-        mutateAsync: verifyEmail,
-        isPending: isVerifyingEmail,
-        isSuccess: isVerifyingEmailSuccess,
+        mutateAsync: confirmEmail,
+        isPending: isConfirmingEmail,
+        isSuccess: isConfirmingEmailSuccess,
     } = useMutation({
-        mutationFn: async (token: string) => await client.api.v1.users["verify-email"].post({ token }),
+        mutationFn: async (token: string) => await client.api.v1.users["confirm-email"].post({ token }),
     });
-    return { verifyEmail, isVerifyingEmail, isVerifyingEmailSuccess };
+    return { confirmEmail, isConfirmingEmail, isConfirmingEmailSuccess };
 };
 
 /**
@@ -24,7 +24,8 @@ export const useResendToken = () => {
         isPending: isResendingToken,
         isSuccess: isResendingTokenSuccess,
     } = useMutation({
-        mutationFn: async (email: string) => await client.api.v1.users["resend-token"].post({ email }),
+        mutationFn: async (input: { token: string }) =>
+            await client.api.v1.users["resend-token"].post(input),
     });
     return { resendToken, isResendingToken, isResendingTokenSuccess };
 };

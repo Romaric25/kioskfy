@@ -37,8 +37,9 @@ export const usersService = new Elysia({ prefix: "/users" })
         }
     )
     .post(
-        "/verify-email",
+        "/confirm-email",
         async ({ body, set }) => {
+            console.log("!!! DEBUG: Service route /confirm-email reached");
             const result = await UsersController.verifyEmail(body.token);
             set.status = result.status;
             return result;
@@ -57,13 +58,16 @@ export const usersService = new Elysia({ prefix: "/users" })
     .post(
         "/resend-token",
         async ({ body, set }) => {
-            const result = await UsersController.resendToken(body.email);
+            const result = await UsersController.resendToken({
+                token: body.token ?? ""
+            });
             set.status = result.status;
             return result;
         },
         {
             body: t.Object({
-                email: t.String({ format: "email" }),
+                email: t.Optional(t.String({ format: "email" })),
+                token: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Users"],
@@ -75,13 +79,13 @@ export const usersService = new Elysia({ prefix: "/users" })
     .get(
         "/me",
         ({ user, set }) => {
-        set.status = 200;
-        return {
-            success: true,
-            status: 200,
-            data: user
-        };
-    },
+            set.status = 200;
+            return {
+                success: true,
+                status: 200,
+                data: user
+            };
+        },
         {
             auth: true,
             detail: {
@@ -94,10 +98,10 @@ export const usersService = new Elysia({ prefix: "/users" })
     .get(
         "/:id",
         async ({ params, set }) => {
-        const result = await UsersController.getById(params.id);
-        set.status = result.status;
-        return result;
-    },
+            const result = await UsersController.getById(params.id);
+            set.status = result.status;
+            return result;
+        },
         {
             params: t.Object({
                 id: t.String(),

@@ -49,7 +49,8 @@ export const LoginForm = () => {
       },
       {
         onError: (ctx) => {
-          const error = getErrorMessage(ctx.error.code, "fr");
+          const translatedError = getErrorMessage(ctx.error.code ?? "", "fr");
+          const error = translatedError || ctx.error.message || "Une erreur est survenue lors de la connexion.";
           setLoginError(error);
           setIsLoading(false);
         },
@@ -196,7 +197,7 @@ export const LoginForm = () => {
       <p className="text-center text-sm text-muted-foreground">
         Vous souhaitez devenir partenaire ?{" "}
         <Link
-          href="/subscription"
+          href="/organization/subscription"
           className="text-primary hover:underline font-medium"
         >
           Faire une demande

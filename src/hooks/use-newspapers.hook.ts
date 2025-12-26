@@ -1,18 +1,28 @@
 import { client } from "@/lib/client"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { NewspaperResponse, UpdateNewspaper, CreateNewspaper } from "@/server/models/newspaper.model"
+import { NewspaperResponse, UpdateNewspaper, CreateNewspaper, Status } from "@/server/models/newspaper.model"
 
 // Hook for published newspapers (public)
 export const usePublishedNewspapers = () => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
         queryKey: ['newspapers-published'],
-        queryFn: () => client.api.v1.newspapers["all-published"].get()
+        queryFn: () => client.api.v1.newspapers["all-published-newspapers"].get()
     })
     const newspapers = data?.data;
 
     return { newspapers, newspapersLoading, newspapersError }
 }
 
+// Hook for published magazines (public)
+export const usePublishedMagazines = () => {
+    const { data, isLoading: magazinesLoading, error: magazinesError } = useQuery({
+        queryKey: ['magazines-published'],
+        queryFn: () => client.api.v1.newspapers["all-published-magazines"].get()
+    })
+    const magazines = data?.data;
+
+    return { magazines, magazinesLoading, magazinesError }
+}
 // Hook for all newspapers (admin)
 export const useAllNewspapers = () => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
@@ -106,6 +116,31 @@ export const useCreateNewspaper = () => {
         isCreatingNewspaper: mutation.isPending,
         isCreatingNewspaperSuccess: mutation.isSuccess,
         createNewspaperError: mutation.error,
+    };
+}
+
+// Hook for updating newspaper status
+export const useUpdateNewspaperStatus = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async ({ id, status }: { id: string; status: Status }) => {
+            return client.api.v1.newspapers({ id }).status.patch({ status });
+        },
+        onSuccess: (_, variables) => {
+            // Invalidate related queries to refresh the data
+            queryClient.invalidateQueries({ queryKey: ['newspapers-published'] });
+            queryClient.invalidateQueries({ queryKey: ['newspapers-all'] });
+            queryClient.invalidateQueries({ queryKey: ['newspaper', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['newspapers-organization'] });
+        },
+    });
+
+    return {
+        updateNewspaperStatus: mutation.mutateAsync,
+        isUpdatingNewspaperStatus: mutation.isPending,
+        isUpdatingNewspaperStatusSuccess: mutation.isSuccess,
+        updateNewspaperStatusError: mutation.error,
     };
 }
 

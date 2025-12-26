@@ -48,15 +48,29 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
 
     // Get all published newspapers (public)
     .get(
-        "/all-published",
+        "/all-published-newspapers",
         async () => {
-            return await NewspapersController.getPublished();
+            return await NewspapersController.getPublishedNewspapers();
         },
         {
             detail: {
                 tags: ["Public"],
                 summary: "Récupérer les journaux publiés",
                 description: "Retourne tous les journaux publiés avec leurs relations (catégories, organisation, pays, etc.)",
+            },
+        }
+    )
+    // Get all published magazines (public)
+    .get(
+        "/all-published-magazines",
+        async () => {
+            return await NewspapersController.getPublishedMagazines();
+        },
+        {
+            detail: {
+                tags: ["Public"],
+                summary: "Récupérer les magazines publiés",
+                description: "Retourne tous les magazines publiés avec leurs relations (catégories, organisation, pays, etc.)",
             },
         }
     )

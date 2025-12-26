@@ -53,19 +53,19 @@ export const PartnershipForm = () => {
     useCreatePartnership();
   const { addError, errors } = useErrorStore();
 
-  const form = useForm<PartnershipRegisterUser & { acceptTerms: boolean }>({
+  const form = useForm<PartnershipRegisterUser>({
     // Cast to any due to Zod version mismatch between workspace packages
     resolver: async (data) => {
       try {
         // Validate with the partnership schema (phone required)
         await partnershipRegisterSchema.parseAsync(data);
 
-        // Validate acceptTerms
-        if (!data.acceptTerms) {
+        // Validate termsAcceptance
+        if (!data.termsAcceptance) {
           return {
             values: {},
             errors: {
-              acceptTerms: { message: "Vous devez accepter les conditions d'utilisation et de vente pour continuer" },
+              termsAcceptance: { message: "Vous devez accepter les conditions d'utilisation et de vente pour continuer" },
             },
           };
         }
@@ -79,9 +79,9 @@ export const PartnershipForm = () => {
             errors[path] = { message: err.message };
           });
 
-          // Also check acceptTerms validation
-          if (!data.acceptTerms) {
-            errors.acceptTerms = { message: "Vous devez accepter les conditions d'utilisation et de vente pour continuer" };
+          // Also check termsAcceptance validation
+          if (!data.termsAcceptance) {
+            errors.termsAcceptance = { message: "Vous devez accepter les conditions d'utilisation et de vente pour continuer" };
           }
 
           return { values: {}, errors };
@@ -96,7 +96,8 @@ export const PartnershipForm = () => {
       phone: "",
       password: "",
       confirmPassword: "",
-      acceptTerms: false,
+      typeUser: "agency",
+      termsAcceptance: false,
     },
   });
 
@@ -114,7 +115,7 @@ export const PartnershipForm = () => {
       });
 
       setShowSuccessDialog(true);
-      form.reset();
+     form.reset();
     } catch (error: any) {
       console.error("Error detected:", error);
       const errorMessage = error?.message || "Erreur lors de l'inscription";
@@ -322,14 +323,14 @@ export const PartnershipForm = () => {
 
           <FormField
             control={form.control}
-            name="acceptTerms"
+            name="termsAcceptance"
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-start space-x-3">
                   <FormControl>
                     <input
                       type="checkbox"
-                      id="acceptTerms"
+                      id="termsAcceptance"
                       className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       checked={field.value}
                       onChange={field.onChange}
@@ -337,7 +338,7 @@ export const PartnershipForm = () => {
                     />
                   </FormControl>
                   <label
-                    htmlFor="acceptTerms"
+                    htmlFor="termsAcceptance"
                     className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
                   >
                     J'accepte les{" "}

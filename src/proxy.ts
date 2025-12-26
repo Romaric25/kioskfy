@@ -90,7 +90,7 @@ export default async function proxy(request: NextRequest) {
     const isAgency = session?.user?.typeUser === "agency";
     const isClient = session?.user?.typeUser === "client";
 
-    const ProtectedRoutes = ["/admin", "/dashboard", "/organization/dashboard"];
+    const ProtectedRoutes = ["/admin", "/dashboard", "/organization/dashboard", '/cart'];
     const publicRoutes = ["/organization/login", "/organization/subscription", "/login", "/register"];
 
     const isProtectedRoute = ProtectedRoutes.some(

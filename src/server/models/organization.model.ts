@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export enum PublicationLanguage {
-    ENGLISH = "English",
-    FRENCH = "French",
+    ENGLISH = "Anglais",
+    FRENCH = "Français",
 }
 
 export enum PublicationType {

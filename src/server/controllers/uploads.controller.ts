@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { uploads } from "@/db/app-schema";
 import { eq, desc } from "drizzle-orm";
-import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client, r2BucketName } from "@/lib/r2";
 import {
@@ -370,9 +370,19 @@ export class UploadsController {
 
     /**
      * Generate a presigned URL for file upload
+     * Allows client to upload directly to R2
      */
-    static async getPresignedUploadUrl(filename: string, contentType: string) {
-        const s3Key = `uploads/${Date.now()}-${filename}`;
+    static async getPresignedUploadUrl(
+        filename: string,
+        contentType: string,
+        folder: string = "uploads"
+    ) {
+        // Sanitize filename and folder to prevent issues
+        const timestamp = Date.now();
+        const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const safeFolder = folder.replace(/[^a-zA-Z0-9-_]/g, "");
+
+        const s3Key = `${safeFolder}/${timestamp}-${safeFilename}`;
 
         const command = new PutObjectCommand({
             Bucket: r2BucketName,
@@ -380,16 +390,84 @@ export class UploadsController {
             ContentType: contentType,
         });
 
+        // URL valid for 1 hour
         const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
+        const publicUrl = `${process.env.R2_PUBLIC_URL}/${s3Key}`;
 
         return {
             success: true,
             data: {
                 presignedUrl,
                 s3Key,
+                publicUrl,
+                filename: safeFilename,
                 expiresIn: 3600,
             },
         };
+    }
+
+    /**
+     * Confirm an upload and save to database
+     * Verifies file existence in S3 before saving
+     */
+    static async confirmUpload(data: {
+        s3Key: string;
+        filename: string;
+        thumbnailS3Key?: string;
+        thumbnailUrl?: string;
+        contentType?: string;
+        size?: number;
+    }) {
+        try {
+            // 1. Verify existence in S3
+            try {
+                const headCommand = new HeadObjectCommand({
+                    Bucket: r2BucketName,
+                    Key: data.s3Key,
+                });
+                await r2Client.send(headCommand);
+            } catch (error) {
+                return {
+                    success: false,
+                    status: 404,
+                    error: "Le fichier n'existe pas dans le stockage (R2). Assurez-vous d'avoir uploadé le fichier.",
+                };
+            }
+
+            // 2. Prepare data
+            const mainUrl = `${process.env.R2_PUBLIC_URL}/${data.s3Key}`;
+
+            // Fallback for thumbnails if not provided (e.g. PDFs or unprocessed images)
+            const thumbnailS3Key = data.thumbnailS3Key || data.s3Key;
+            const thumbnailUrl = data.thumbnailUrl || mainUrl;
+
+            // 3. Save to database
+            const result = await db.insert(uploads).values({
+                filename: data.filename,
+                thumbnailS3Key,
+                thumbnailUrl,
+            });
+
+            return {
+                success: true,
+                status: 201,
+                data: {
+                    id: result[0].insertId,
+                    url: mainUrl,
+                    s3Key: data.s3Key,
+                    thumbnailUrl,
+                },
+                message: "Fichier confirmé et enregistré avec succès",
+            };
+        } catch (error) {
+            console.error("[UploadsController] Confirm error:", error);
+            return {
+                success: false,
+                status: 500,
+                error: "Erreur lors de la confirmation de l'upload",
+                details: error instanceof Error ? error.message : "Erreur inconnue",
+            };
+        }
     }
 
     /**

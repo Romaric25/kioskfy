@@ -1,7 +1,7 @@
 
 
 import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useSelectedOrganizationStore } from "@/stores/use-selected-organization.store";
 export const authKeys = {
@@ -14,6 +14,7 @@ export const authKeys = {
     [...authKeys.all, "userByEmail", email] as const,
 };
 export const useAuth = () => {
+  const router = useRouter();
   const { data, isPending, isRefetching, refetch } = authClient.useSession();
   let isExpired = false;
   const session = data?.session;
@@ -32,7 +33,7 @@ export const useAuth = () => {
       fetchOptions: {
         onSuccess: () => {
           clearSelectedOrganization();
-          redirect("/");
+          router.push("/");
         },
         onError: () => {
           toast.error("Failed to logout");

@@ -92,12 +92,12 @@ export interface NewspaperListItem {
 export const createNewspaperSchema = z.object({
     issueNumber: z.string().min(1, "Le numéro d'édition est requis"),
     publishDate: z.string().min(1, "La date de publication est requise"),
-    coverImageFile: z
-        .array(z.any())
-        .min(1, "L'image de couverture est requise"),
+    coverImageFile: z.array(z.any()).optional(),
+    coverImageUploadId: z.number().optional(),
     price: z.number().positive("Le prix doit être positif"),
     status: z.enum([Status.DRAFT, Status.PENDING, Status.PUBLISHED, Status.ARCHIVED]),
-    pdfFile: z.array(z.any()).min(1, "Le fichier PDF est requis"),
+    pdfFile: z.array(z.any()).optional(),
+    pdfUploadId: z.number().optional(),
     categoryIds: z.array(z.number()),
     organizationId: z.string(),
     country: z.string(),

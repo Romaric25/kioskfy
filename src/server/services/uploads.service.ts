@@ -115,18 +115,46 @@ export const uploadsService = new Elysia({ prefix: "/uploads" })
         async ({ body }) => {
             return await UploadsController.getPresignedUploadUrl(
                 body.filename,
-                body.contentType
+                body.contentType,
+                body.folder
             );
         },
         {
             body: t.Object({
                 filename: t.String({ minLength: 1 }),
                 contentType: t.String({ minLength: 1 }),
+                folder: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Admin"],
                 summary: "Obtenir une URL présignée pour upload",
                 description: "Génère une URL présignée pour uploader un fichier directement vers R2",
+            },
+        }
+    )
+    // Confirm upload
+    .post(
+        "/confirm",
+        async ({ body, set }) => {
+            const result = await UploadsController.confirmUpload(body);
+            if (!result.success && "status" in result) {
+                set.status = result.status;
+            }
+            return result;
+        },
+        {
+            body: t.Object({
+                s3Key: t.String({ minLength: 1 }),
+                filename: t.String({ minLength: 1 }),
+                thumbnailS3Key: t.Optional(t.String()),
+                thumbnailUrl: t.Optional(t.String()),
+                contentType: t.Optional(t.String()),
+                size: t.Optional(t.Numeric()),
+            }),
+            detail: {
+                tags: ["Admin"],
+                summary: "Confirmer un upload",
+                description: "Vérifie la présence du fichier sur R2 et l'enregistre en base de données",
             },
         }
     )

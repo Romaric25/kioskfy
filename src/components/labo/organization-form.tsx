@@ -80,13 +80,16 @@ export function OrganizationForm() {
       const { address, phone, country, logoFile, description, ...rest } =
         values;
 
-      // Get the File object from the uploaded file
-      const fileToUpload = logoFile && logoFile.length > 0 ? logoFile[0].file as File : undefined;
+      // Get the Upload ID from the uploaded file results (from presigned upload)
+      const logoUploadId = logoFile && logoFile.length > 0 ? (logoFile[0] as any).id : undefined;
+      // Only send file if NO upload ID (fallback)
+      const fileToUpload = !logoUploadId && logoFile && logoFile.length > 0 ? logoFile[0].file as File : undefined;
 
       await createOrganization({
         ...rest,
         slug: "", // Backend generates slug, but type requires it
         logoFile: fileToUpload,
+        logoUploadId: logoUploadId,
         country,
         phone,
         address,
@@ -164,6 +167,7 @@ export function OrganizationForm() {
                         maxFiles={1}
                         multiple={false}
                         convertToBase64={true}
+                        presignedUpload={true}
                         labels={{
                           dropzone: "Glissez et déposez le logo ici",
                           uploadButton: "Sélectionner un logo",

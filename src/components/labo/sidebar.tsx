@@ -73,12 +73,12 @@ export function Sidebar({ className }: SidebarProps) {
               {selectedOrganizationId ? (
                 <Link href={`/organization/dashboard/publish`}>
                   <Plus className="h-4 w-4" />
-                  Publier
+                  Publier une édition
                 </Link>
               ) : (
                 <span>
                   <Plus className="h-4 w-4" />
-                  Publier
+                  Publier une édition
                 </span>
               )}
             </Button>

@@ -149,9 +149,28 @@ export function PublishForm() {
   }, [isCreatingNewspaperSuccess, router, form]);
 
   const onSubmit = async (data: CreateNewspaper) => {
-    console.log("Publishing newspaper:", data);
+    // Extract IDs from file objects if they are pre-uploaded
+    const coverImageUploadId = data.coverImageFile && data.coverImageFile.length > 0 && 'id' in data.coverImageFile[0]
+      ? (data.coverImageFile[0] as any).id
+      : undefined;
+
+    const pdfUploadId = data.pdfFile && data.pdfFile.length > 0 && 'id' in data.pdfFile[0]
+      ? (data.pdfFile[0] as any).id
+      : undefined;
+
+    const payload = {
+      ...data,
+      coverImageUploadId,
+      pdfUploadId,
+      // If we have an upload ID, we don't need to send the file object/base64 again if not needed
+      // But backend handles priority. For cleaner payload, we could set file fields to undefined if ID exists
+      coverImageFile: coverImageUploadId ? undefined : data.coverImageFile,
+      pdfFile: pdfUploadId ? undefined : data.pdfFile,
+    };
+
+    console.log("Publishing newspaper:", payload);
     try {
-      await createNewspaper(data);
+      await createNewspaper(payload);
     } catch (error) {
       console.error("Error publishing:", error);
       //toast.error("Erreur lors de la publication de l'édition");
@@ -303,6 +322,7 @@ export function PublishForm() {
                       maxFiles={1}
                       multiple={false}
                       convertToBase64={true}
+                      presignedUpload={true}
                       labels={{
                         dropzone: "Cliquez ou glissez pour télécharger une couverture",
                         uploadButton: "Sélectionner une image",
@@ -331,6 +351,7 @@ export function PublishForm() {
                     <UploadPdf
                       fieldName="pdfFile"
                       maxSizeMB={250}
+                      presignedUpload={true}
                       labels={{
                         dropzone: "Cliquez ou glissez pour télécharger le PDF",
                         uploadButton: "Sélectionner un PDF",

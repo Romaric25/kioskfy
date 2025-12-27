@@ -54,7 +54,6 @@ import {
   Bell,
   Shield,
   CreditCard,
-  Upload,
   Save,
   Trash2,
   AlertTriangle,
@@ -99,6 +98,7 @@ import { SettingsOrganizationSkeleton } from "./skeleton/settings-organization-s
 import { useDeleteOrganization, useOrganization, useUpdateOrganization } from "@/hooks/use-organizations.hook";
 import { useSelectedOrganizationStore } from "@/stores/use-selected-organization.store";
 import { useGetCountryByName } from "@/hooks/use-get-country-by-name.hook";
+import { UploadFile } from "@/components/upload-file";
 
 export const SettingsOrganization = () => {
   const { slug } = useParams();
@@ -113,9 +113,7 @@ export const SettingsOrganization = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoBase64, setLogoBase64] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoFiles, setLogoFiles] = useState<any[]>([]);
   const { organization, isLoadingOrganization } = useOrganization();
   const { countries, countriesLoading } = useCountries();
   const { categories: availableCategories, categoriesLoading } =
@@ -136,6 +134,19 @@ export const SettingsOrganization = () => {
     () => currency ? getCurrencySymbol(currency, code || 'fr-FR') : 'XOF',
     [currency, code]
   );
+
+  const isLogoDirty = useMemo(() => {
+    const hasInitialLogo = !!activeOrganization?.logo;
+    const hasCurrentLogo = logoFiles.length > 0;
+
+    // If mismatch in presence
+    if (hasInitialLogo !== hasCurrentLogo) return true;
+
+    // If both have logo, check if it's the same 'current' one
+    if (hasCurrentLogo && logoFiles[0].id !== 'current') return true;
+
+    return false;
+  }, [logoFiles, activeOrganization]);
 
   const form = useForm<OrganizationSettings>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,8 +202,17 @@ export const SettingsOrganization = () => {
         smsNotifications: (metadata?.smsNotifications as boolean) || false,
         pushNotifications: (metadata?.pushNotifications as boolean) ?? true,
       });
+
+      // Init logo
+      if (activeOrganization.logo) {
+        setLogoFiles([{
+          id: 'current',
+          preview: activeOrganization?.logo,
+          file: { name: 'Logo actuel', type: 'image/*' }
+        }]);
+      }
     }
-  }, [activeOrganization, metadata, countries, availableCategories]);
+  }, [activeOrganization, metadata, countries, availableCategories, form]);
 
   useEffect(() => {
     if (isDeletingOrganizationSuccess) {
@@ -203,46 +223,7 @@ export const SettingsOrganization = () => {
     }
   }, [isDeletingOrganizationSuccess, clearSelectedOrganization, router]);
 
-  const handleLogoChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Veuillez sélectionner une image valide");
-        return;
-      }
-
-      // Validate file size (max 2MB)
-      const maxSize = 2 * 1024 * 1024; // 2MB
-      if (file.size > maxSize) {
-        toast.error("L'image ne doit pas dépasser 2Mo");
-        return;
-      }
-
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setLogoPreview(previewUrl);
-
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setLogoBase64(base64String);
-      };
-      reader.readAsDataURL(file);
-    },
-    []
-  );
-
-  const handleRemoveLogo = useCallback(() => {
-    setLogoPreview(null);
-    setLogoBase64(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, []);
+  // Removed custom handlers handleLogoChange and handleRemoveLogo as UploadFile handles this
 
   const onSubmit = async (values: OrganizationSettings): Promise<void> => {
     try {
@@ -254,7 +235,8 @@ export const SettingsOrganization = () => {
         address: values.address,
         price: values.price,
         country: values.country,
-        ...(logoBase64 && { logo: logoBase64 }),
+        // Logo handling
+        ...((logoFiles.length > 0 && typeof logoFiles[0].id === 'number') ? { logoUploadId: logoFiles[0].id } : {}),
         metadata: {
           categories: values.categories,
           frequency: values.frequency,
@@ -319,7 +301,7 @@ export const SettingsOrganization = () => {
             <p className="text-muted-foreground">Gérer les paramètres et préférences de l'agence</p>
           </div>
           <div className="flex items-center space-x-2">
-            {(form.formState.isDirty || logoBase64) && (
+            {(form.formState.isDirty || isLogoDirty) && (
               <Badge
                 variant="outline"
                 className="text-orange-600 border-orange-600"
@@ -330,7 +312,7 @@ export const SettingsOrganization = () => {
             <Button
               type="submit"
               disabled={
-                (!form.formState.isDirty && !logoBase64) ||
+                (!form.formState.isDirty && !isLogoDirty) ||
                 isUpdatingOrganization
               }
               className="min-w-[100px]"
@@ -391,56 +373,23 @@ export const SettingsOrganization = () => {
                 {/* Identity Section */}
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-shrink-0">
-                    <div className="space-y-4">
-                      <Label className="text-base">Logo de l'agence <span className="text-red-500">*</span></Label>
-                      <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-muted/20">
-                        <div className="relative">
-                          <Avatar className="h-32 w-32 border-4 border-background shadow-sm">
-                            <AvatarImage
-                              src={
-                                logoPreview || activeOrganization?.logo || ""
-                              }
-                              alt="Logo"
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="text-4xl bg-muted">
-                              <Building2 className="h-12 w-12 text-muted-foreground" />
-                            </AvatarFallback>
-                          </Avatar>
-                          {logoPreview && (
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute -top-2 -right-2 h-8 w-8 rounded-full shadow-md"
-                              onClick={handleRemoveLogo}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                        <div className="w-full">
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/png,image/jpeg,image/jpg,image/webp"
-                            onChange={handleLogoChange}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {logoPreview ? "Changer" : "Télécharger le logo"}
-                          </Button>
-                          <p className="text-xs text-center text-muted-foreground mt-2 px-2">
-                            Recommandé : 512x512px <br />
-                            Max : 2Mo (PNG, JPG)
-                          </p>
-                        </div>
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">Logo</Label>
+                      <div className="w-64">
+                        <UploadFile
+                          fieldName="logo"
+                          value={logoFiles}
+                          onChange={setLogoFiles}
+                          maxFiles={1}
+                          maxSizeMB={10}
+                          presignedUpload={true}
+                          labels={{
+                            dropzone: "Déposer",
+                            uploadButton: "Sélectionner",
+                            addMoreButton: "Changer",
+                            filesUploaded: "Aperçu",
+                          }}
+                        />
                       </div>
                     </div>
                   </div>

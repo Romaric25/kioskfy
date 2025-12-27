@@ -451,12 +451,26 @@ export class NewspapersController {
 
             // 1. Process files first (Upload & Create Upload Records)
             let coverImageUrl = "";
-            let coverImageUploadId: number | null = null;
-            let pdfUrl = "";
-            let pdfUploadId: number | null = null;
+            let coverImageUploadId: number | null = data.coverImageUploadId ?? null;
 
-            // Handle cover image upload
-            if (data.coverImageFile && data.coverImageFile.length > 0) {
+            // Magic: Extract ID from file object if already uploaded
+            if (!coverImageUploadId && data.coverImageFile && data.coverImageFile.length > 0 && (data.coverImageFile[0] as any).id) {
+                coverImageUploadId = (data.coverImageFile[0] as any).id;
+            }
+
+            let pdfUrl = "";
+            let pdfUploadId: number | null = data.pdfUploadId ?? null;
+
+            // Handle pre-uploaded cover image
+            if (coverImageUploadId) {
+                const upload = await UploadsController.getById(coverImageUploadId);
+                if (upload.success && upload.data) {
+                    // Use the thumbnail URL if available
+                    coverImageUrl = upload.data.thumbnailUrl;
+                }
+            }
+            // Fallback: Handle cover image upload via file
+            else if (data.coverImageFile && data.coverImageFile.length > 0) {
                 const coverFile = data.coverImageFile[0];
 
                 if (coverFile instanceof File || (coverFile && typeof coverFile === 'object')) {
@@ -510,8 +524,21 @@ export class NewspapersController {
                 }
             }
 
-            // Handle PDF upload
-            if (data.pdfFile && data.pdfFile.length > 0) {
+            // Handle pre-uploaded PDF
+            // Handle pre-uploaded PDF
+            // Magic: Extract ID from file object if already uploaded
+            if (!pdfUploadId && data.pdfFile && data.pdfFile.length > 0 && (data.pdfFile[0] as any).id) {
+                pdfUploadId = (data.pdfFile[0] as any).id;
+            }
+
+            if (pdfUploadId) {
+                const upload = await UploadsController.getById(pdfUploadId);
+                if (upload.success && upload.data) {
+                    pdfUrl = upload.data.thumbnailUrl;
+                }
+            }
+            // Fallback: Handle PDF upload via file
+            else if (data.pdfFile && data.pdfFile.length > 0) {
                 const pdfFile = data.pdfFile[0];
 
                 if (pdfFile instanceof File || (pdfFile && typeof pdfFile === 'object')) {

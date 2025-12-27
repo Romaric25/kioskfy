@@ -47,7 +47,7 @@ export function NavMain({ items, publishUrl, isDisabled }: NavMainProps) {
                                 {isDisabled ? (
                                     <span className="flex items-center gap-2">
                                         <Plus className="size-4" />
-                                        <span>Publier</span>
+                                        <span>Publier une édition</span>
                                     </span>
                                 ) : (
                                     <Link
@@ -59,7 +59,7 @@ export function NavMain({ items, publishUrl, isDisabled }: NavMainProps) {
                                         }}
                                     >
                                         <Plus className="size-4" />
-                                        <span>Publier</span>
+                                        <span>Publier une édition</span>
                                     </Link>
                                 )}
                             </SidebarMenuButton>

@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { AlertCircleIcon, ImageIcon, UploadIcon, XIcon } from "lucide-react";
 
-import { useFileUpload } from "@/hooks";
+import { useFileUpload, usePresignedUpload } from "@/hooks";
 import { Button } from "@/components/ui/button";
 
 export interface UploadFileProps {
@@ -20,6 +21,7 @@ export interface UploadFileProps {
   maxFiles?: number; // Maximum number of files (default: 1)
   multiple?: boolean; // Allow multiple files (default: false)
   convertToBase64?: boolean; // Convert files to base64 (default: true)
+  presignedUpload?: boolean; // Use presigned upload (default: false)
 
   // Label props
   labels?: {
@@ -42,6 +44,7 @@ export const UploadFile = ({
   maxFiles = 1,
   multiple = false,
   convertToBase64 = true,
+  presignedUpload = false,
   labels = {},
 }: UploadFileProps) => {
   // Merge default labels with provided labels
@@ -76,6 +79,8 @@ export const UploadFile = ({
     );
   };
 
+  const { uploadFile, isUploading } = usePresignedUpload();
+
   const [
     { files, isDragging, errors },
     {
@@ -86,6 +91,7 @@ export const UploadFile = ({
       openFileDialog,
       removeFile,
       getInputProps,
+      setFiles,
     },
   ] = useFileUpload({
     accept,
@@ -97,15 +103,57 @@ export const UploadFile = ({
       if (files.length > 0) {
         const fileObjects = files.map((file) => file.file);
 
-        if (convertToBase64) {
+        if (presignedUpload) {
+          try {
+            // Upload sequentially to ensure order and avoid overwhelming
+            const uploadedResults = [];
+            for (const file of fileObjects) {
+              const result = await uploadFile(file);
+              if (result) {
+                uploadedResults.push({
+                  ...result,
+                  // Add preview for UI consistency if needed, but result.url should be valid
+                  preview: result.url,
+                  name: file.name,
+                  type: file.type,
+                  size: file.size
+                });
+              }
+            }
+            if (uploadedResults.length > 0) {
+              setValue?.(fieldName, uploadedResults);
+              onChange?.(uploadedResults);
+            }
+          } catch (e) {
+            console.error("Presigned upload failed", e);
+          }
+        } else if (convertToBase64) {
           const base64Files = await convertFilesToBase64(fileObjects);
           setValue?.(fieldName, base64Files);
+          onChange?.(base64Files);
         } else {
           setValue?.(fieldName, fileObjects);
+          onChange?.(fileObjects);
         }
       }
     },
   });
+
+  useEffect(() => {
+    if (value && Array.isArray(value)) {
+      const normalizedFiles = value.map((item) => {
+        // If item is already wrapped (has .file), use it
+        if (item.file) return item;
+        // Otherwise wrap it
+        return {
+          file: item,
+          id: item.id || `file-${Date.now()}-${Math.random()}`,
+          preview: item.preview || item.url,
+        };
+      });
+      setFiles(normalizedFiles);
+    }
+  }, [value, setFiles]);
 
   // Fonction pour gérer la suppression d'un fichier
   const handleRemoveFile = async (fileId: string) => {
@@ -118,11 +166,14 @@ export const UploadFile = ({
       if (convertToBase64) {
         const base64Files = await convertFilesToBase64(fileObjects);
         setValue?.(fieldName, base64Files);
+        onChange?.(base64Files);
       } else {
         setValue?.(fieldName, fileObjects);
+        onChange?.(fileObjects);
       }
     } else {
       setValue?.(fieldName, []);
+      onChange?.([]);
     }
   };
 
@@ -148,6 +199,7 @@ export const UploadFile = ({
             <div className="flex items-center justify-between gap-2">
               <h3 className="truncate text-sm font-medium">
                 {mergedLabels.filesUploaded} ({files.length})
+                {isUploading && <span className="ml-2 text-xs text-muted-foreground animate-pulse">Upload en cours...</span>}
               </h3>
               <Button
                 variant="outline"
@@ -163,7 +215,13 @@ export const UploadFile = ({
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div
+              className={
+                maxFiles === 1
+                  ? "grid grid-cols-1"
+                  : "grid grid-cols-2 gap-4 md:grid-cols-3"
+              }
+            >
               {files.map((file) => (
                 <div
                   key={file.id}

@@ -52,6 +52,7 @@ export type FileUploadActions = {
   handleDrop: (e: DragEvent<HTMLElement>) => void;
   handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   openFileDialog: () => void;
+  setFiles: (files: FileWithPreview[]) => void;
   getInputProps: (
     props?: InputHTMLAttributes<HTMLInputElement>
   ) => InputHTMLAttributes<HTMLInputElement> & {
@@ -386,6 +387,17 @@ export const useFileUpload = (
     [accept, multiple, handleFileChange]
   );
 
+  const setFiles = useCallback(
+    (files: FileWithPreview[]) => {
+      setState((prev) => ({
+        ...prev,
+        files,
+        errors: [],
+      }));
+    },
+    []
+  );
+
   return [
     state,
     {
@@ -399,6 +411,7 @@ export const useFileUpload = (
       handleDrop,
       handleFileChange,
       openFileDialog,
+      setFiles,
       getInputProps,
     },
   ];

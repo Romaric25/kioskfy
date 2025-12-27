@@ -1,13 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import { AlertCircleIcon, FileText, UploadIcon, XIcon } from "lucide-react";
 
-import { useFileUpload } from "@/hooks/use-file-upload.hook";
+import { useFileUpload, usePresignedUpload } from "@/hooks";
 import { Button } from "@/components/ui/button";
 
 export interface UploadPdfProps {
   setValue?: (fieldName: string, value: unknown) => void;
   value?: unknown[];
+  onChange?: (files: unknown[]) => void;
   error?: string;
   fieldName?: string;
   maxSizeMB?: number;
@@ -17,6 +19,7 @@ export interface UploadPdfProps {
     addMoreButton?: string;
     filesUploaded?: string;
   };
+  presignedUpload?: boolean;
 }
 
 function formatFileSize(bytes: number): string {
@@ -30,10 +33,12 @@ function formatFileSize(bytes: number): string {
 export const UploadPdf = ({
   setValue,
   value,
+  onChange,
   error,
   fieldName = "pdfFile",
   maxSizeMB = 250,
   labels = {},
+  presignedUpload = false,
 }: UploadPdfProps) => {
   const mergedLabels = {
     dropzone: labels.dropzone || "Déposer votre fichier PDF ici",
@@ -65,6 +70,8 @@ export const UploadPdf = ({
     );
   };
 
+  const { uploadFile, isUploading } = usePresignedUpload();
+
   const [
     { files, isDragging, errors },
     {
@@ -75,6 +82,7 @@ export const UploadPdf = ({
       openFileDialog,
       removeFile,
       getInputProps,
+      setFiles,
     },
   ] = useFileUpload({
     accept: "application/pdf",
@@ -87,15 +95,54 @@ export const UploadPdf = ({
         const fileObjects = files.map(
           (file: unknown) => (file as { file: File }).file
         );
-        const base64Files = await convertFilesToBase64(fileObjects);
-        setValue?.(fieldName, base64Files);
+
+        if (presignedUpload) {
+          try {
+            // Upload single file (since maxFiles: 1)
+            const file = fileObjects[0];
+            const result = await uploadFile(file);
+
+            if (result) {
+              const uploadedResult = [{
+                ...result,
+                file: file, // Keep reference if needed
+                name: file.name,
+                type: file.type,
+                size: file.size
+              }];
+              setValue?.(fieldName, uploadedResult);
+              onChange?.(uploadedResult);
+            }
+          } catch (e) {
+            console.error("PDF Upload failed", e);
+          }
+        } else {
+          const base64Files = await convertFilesToBase64(fileObjects);
+          setValue?.(fieldName, base64Files);
+          onChange?.(base64Files);
+        }
       }
     },
   });
 
+  useEffect(() => {
+    if (value && Array.isArray(value)) {
+      const normalizedFiles = value.map((item: any) => {
+        if (item.file) return item;
+        return {
+          file: item,
+          id: item.id || `file-${Date.now()}-${Math.random()}`,
+          preview: item.preview || item.url,
+        };
+      });
+      setFiles(normalizedFiles);
+    }
+  }, [value, setFiles]);
+
   const handleRemoveFile = async (fileId: string) => {
     removeFile(fileId);
     setValue?.(fieldName, []);
+    onChange?.([]);
   };
 
   return (
@@ -119,6 +166,7 @@ export const UploadPdf = ({
             <div className="flex items-center justify-between gap-2">
               <h3 className="truncate text-sm font-medium">
                 {mergedLabels.filesUploaded}
+                {isUploading && <span className="ml-2 text-xs text-muted-foreground animate-pulse">Upload en cours...</span>}
               </h3>
               <Button variant="outline" size="sm" onClick={openFileDialog}>
                 <UploadIcon

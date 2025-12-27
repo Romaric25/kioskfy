@@ -81,6 +81,12 @@ export class OrganizationsController {
                     logoUrl = uploadResult.logoUrl;
                     logoUploadId = uploadResult.logoUploadId;
                 }
+            } else if (input.logoUploadId) {
+                // Retrieve URL from existing upload
+                const upload = await UploadsController.getById(input.logoUploadId);
+                if (upload.success && upload.data) {
+                    logoUrl = upload.data.thumbnailUrl;
+                }
             }
 
             // Generate slug if not provided
@@ -177,11 +183,19 @@ export class OrganizationsController {
                     logoUploadId = uploadResult.logoUploadId;
                 }
             } else if (input.logoUploadId !== undefined) {
+                // Delete old logo if replacing (and exists)
+                if (currentOrg.logoUploadId && currentOrg.logoUploadId !== input.logoUploadId) {
+                    await UploadsController.delete(currentOrg.logoUploadId);
+                }
+
                 // Handle explicit logoUploadId update without file
                 logoUploadId = input.logoUploadId;
-                // Note: We might want to fetch the URL for this uploadId to keep 'logo' field in sync,
-                // but for now we assume the client might not expect that side effect or handles it.
-                // However, better-auth organization table has 'logo' column.
+
+                // Fetch URL to keep 'logo' field in sync
+                const upload = await UploadsController.getById(input.logoUploadId);
+                if (upload.success && upload.data) {
+                    logoUrl = upload.data.thumbnailUrl;
+                }
             }
 
             // Parse existing metadata

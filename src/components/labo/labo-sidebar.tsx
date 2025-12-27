@@ -97,7 +97,7 @@ export function LaboSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) 
                             className="data-[slot=sidebar-menu-button]:!p-1.5"
                         >
                             <Link href="/organization/dashboard">
-                                <Logo width={24} height={24} />
+                                <Logo width={80} height={80} />
                                 <span className="text-base font-semibold">Kioskfy Labo</span>
                             </Link>
                         </SidebarMenuButton>

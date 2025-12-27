@@ -155,10 +155,18 @@ export function EditNewspaperSheet({
         updateData.status = data.status;
       }
       if (data.coverImageFile && data.coverImageFile.length > 0) {
-        updateData.coverImageFile = data.coverImageFile;
+        if ('id' in data.coverImageFile[0]) {
+          updateData.coverImageUploadId = (data.coverImageFile[0] as any).id;
+        } else {
+          updateData.coverImageFile = data.coverImageFile;
+        }
       }
       if (data.pdfFile && data.pdfFile.length > 0) {
-        updateData.pdfFile = data.pdfFile;
+        if ('id' in data.pdfFile[0]) {
+          updateData.pdfUploadId = (data.pdfFile[0] as any).id;
+        } else {
+          updateData.pdfFile = data.pdfFile;
+        }
       }
 
       await updateNewspaper({
@@ -288,6 +296,7 @@ export function EditNewspaperSheet({
                           maxFiles={1}
                           multiple={false}
                           convertToBase64={true}
+                          presignedUpload={true}
                           labels={{
                             dropzone: "Cliquez ou glissez pour télécharger une image",
                             uploadButton: "Sélectionner une image",
@@ -317,6 +326,7 @@ export function EditNewspaperSheet({
                         <UploadPdf
                           fieldName="pdfFile"
                           maxSizeMB={250}
+                          presignedUpload={true}
                           labels={{
                             dropzone: "Cliquez ou glissez pour télécharger le PDF",
                             uploadButton: "Sélectionner un PDF",

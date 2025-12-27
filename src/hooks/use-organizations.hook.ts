@@ -51,7 +51,7 @@ export const useOrganization = () => {
 /**
  * Interface pour la création d'organisation avec logo
  */
-interface CreateOrganizationWithLogo extends Omit<CreateOrganization, "logo" | "logoUploadId"> {
+interface CreateOrganizationWithLogo extends Omit<CreateOrganization, "logo"> {
   logoFile?: File;
 }
 
@@ -79,6 +79,7 @@ export const useCreateOrganization = () => {
         description: data.description,
         metadata: data.metadata ?? undefined,
         logoFile: data.logoFile,
+        logoUploadId: data.logoUploadId,
       });
 
       if (result.error) {
@@ -118,7 +119,7 @@ export const useCreateOrganization = () => {
 /**
  * Interface pour la mise à jour d'organisation avec logo
  */
-interface UpdateOrganizationWithLogo extends Omit<UpdateOrganization, "logo" | "logoUploadId" | "id"> {
+interface UpdateOrganizationWithLogo extends Omit<UpdateOrganization, "logo" | "id"> {
   logoFile?: File;
 }
 
@@ -145,6 +146,7 @@ export const useUpdateOrganization = () => {
         price: data.price,
         metadata: data.metadata ?? undefined,
         logoFile: data.logoFile,
+        logoUploadId: data.logoUploadId,
       });
 
       if (result.error) {

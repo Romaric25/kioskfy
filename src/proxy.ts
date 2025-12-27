@@ -37,6 +37,15 @@ export default async function proxy(request: NextRequest) {
     }
 
     // ============================================
+    // Redirection globale: www.kioskfy.com/organization/* -> labo.kioskfy.com/organization/*
+    // ============================================
+    if ((!subdomain || subdomain === 'www') && pathname.startsWith('/organization')) {
+        const newUrl = new URL(pathname, `https://${laboHost}`);
+        newUrl.search = request.nextUrl.search;
+        return NextResponse.redirect(newUrl);
+    }
+
+    // ============================================
     // Redirections pour les sous-domaines admin et labo
     // Sur labo.kioskfy.com : toutes les routes qui ne commencent pas par /organization -> /organization/dashboard
     // Sur admin.kioskfy.com : toutes les routes qui ne commencent pas par /admin -> /admin/dashboard

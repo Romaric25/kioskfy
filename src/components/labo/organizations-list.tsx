@@ -108,12 +108,9 @@ export function OrganizationsList() {
                       <CardTitle className="text-lg truncate">
                         {organization?.name}
                       </CardTitle>
-                      <CardDescription className="text-xs mt-1">
-                        {organization?.slug}
-                      </CardDescription>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <CardDescription className="text-xs mt-4">
                         Créée le {organization?.createdAt ? formatDate(organization.createdAt, dateLocale) : "-"}
-                      </p>
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>

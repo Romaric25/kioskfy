@@ -310,6 +310,7 @@ export class NewspapersController {
                     slug: organizations.slug,
                     logo: organizations.logo,
                     metadata: organizations.metadata,
+                    description: organizations.description,
                 },
                 country: {
                     id: countries.id,

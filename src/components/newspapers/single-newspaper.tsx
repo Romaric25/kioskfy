@@ -180,8 +180,8 @@ export const SingleNewspaper = () => {
                                     <InfoIcon className="h-4 w-4" />
                                     À propos de l'agence
                                 </h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                    {newspaper.organization.name}
+                                <p className="text-muted-foreground text-sm leading-relaxed max-h-[10ch] overflow-y-auto">
+                                    {newspaper.organization.description}
                                 </p>
                             </div>
                         </>

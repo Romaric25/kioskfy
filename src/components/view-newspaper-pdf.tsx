@@ -12,6 +12,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { PanelLeftClose, PanelLeft, ArrowLeft, ZoomIn, ZoomOut, Maximize, Minimize, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { formatDate } from "@/lib/helpers";
 
 type Props = { scale?: number };
 
@@ -454,8 +456,25 @@ export const NewspaperPdfViewer = ({ scale = 0.60 }: Props) => { // slightly lar
                         </Button>
                     </div>
 
-                    <div className="flex-1 text-center font-medium text-sm truncate ml-4 hidden md:block">
-                        {agencyName} - {newspaper?.issueNumber}
+                    <div className="flex-1 font-medium text-sm truncate ml-4 hidden md:flex items-center justify-center gap-3">
+                        {newspaper?.organization?.logo && (
+                            <div className="relative h-9 w-9 rounded-full overflow-hidden border bg-background shrink-0 shadow-sm">
+                                <Image
+                                    src={newspaper.organization.logo}
+                                    alt={agencyName || "Agency Logo"}
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
+                        )}
+                        <div className="flex flex-col items-start leading-tight">
+                            <span className="truncate">{agencyName} <span className="text-muted-foreground mx-1">•</span> N°{newspaper?.issueNumber}</span>
+                            {newspaper?.publishDate && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                    Publié le {formatDate(newspaper.publishDate, undefined, "d MMMM yyyy")}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-1 ml-auto">

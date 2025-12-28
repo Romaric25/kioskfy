@@ -55,6 +55,7 @@ export interface NewspaperResponse {
         name: string;
         slug: string;
         logo: string | null;
+        description?: string;
         metadata?: string | { frequency?: string } | null;
     } | null;
     country?: {

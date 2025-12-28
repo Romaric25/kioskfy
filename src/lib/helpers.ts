@@ -3,7 +3,6 @@ import { format, Locale } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 
 const locales: Record<string, Locale> = {
-    en: enUS,
     fr: fr,
 };
 
@@ -24,11 +23,13 @@ export function excludePaths(pathname: string): boolean {
 }
 
 export function formatDate(date: string | Date, dateLocale?: Locale | string, formatString?: string): string {
-    let localeObj: Locale | undefined = undefined;
+    let localeObj: Locale = fr;
 
     if (typeof dateLocale === 'string') {
-        localeObj = locales[dateLocale];
-    } else {
+        if (locales[dateLocale]) {
+            localeObj = locales[dateLocale];
+        }
+    } else if (dateLocale) {
         localeObj = dateLocale;
     }
 

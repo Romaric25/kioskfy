@@ -3,21 +3,30 @@ import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import { ac, admin, editor, member, owner, superadmin, user as userRole } from "@/lib/permissions";
-import { emailOTP, openAPI, organization, admin as adminPlugin } from "better-auth/plugins";
+import { openAPI, organization, admin as adminPlugin } from "better-auth/plugins";
 import { users as userTable } from "@/db/auth-schema";
 import { eq } from "drizzle-orm";
 import { nextCookies } from "better-auth/next-js";
 import { hashPassword, verifyPassword } from "./argon2";
-import { sendEmail } from "./email";
-import WelcomeAgencyEmail from "@/emails/WelcomeAgencyEmail";
-import { render } from "@react-email/components";
-import VerificationAgencyEmail from "@/emails/VerificationAgencyEmail";
-import VerificationClientEmail from "@/emails/VerificationClientEmail";
 
 const isProduction = process.env.NODE_ENV === 'production';
 export const auth = betterAuth({
     baseURL: isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
     basePath: '/api/auth',
+    socialProviders: {
+        google: {
+            accessType: "offline",
+            prompt: "select_account consent",
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        },
+        facebook: {
+            clientId: process.env.FACEBOOK_CLIENT_ID as string,
+            clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
+            scopes: ["email", "public_profile", "user_friends"],
+            fields: ["user_friends"],
+        },
+    },
     trustedOrigins: [
         "http://localhost:3000",
         "*.kioskfy.com",
@@ -75,14 +84,16 @@ export const auth = betterAuth({
         additionalFields: {
             phone: {
                 type: 'string',
-                required: true,
-                unique: true,
+                required: false,
+                unique: false,
                 input: true,
+                defaultValue: '',
             },
             lastName: {
                 type: 'string',
-                required: true,
+                required: false,
                 input: true,
+                defaultValue: '',
             },
             role: {
                 type: 'string',

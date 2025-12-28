@@ -3,6 +3,7 @@ import {
     adminClient,
     emailOTPClient,
     inferAdditionalFields,
+    oneTapClient,
     organizationClient,
 } from "better-auth/client/plugins";
 import { ac, owner, admin, member, editor } from "./permissions";

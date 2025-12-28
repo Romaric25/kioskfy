@@ -468,7 +468,7 @@ export const NewspaperPdfViewer = ({ scale = 0.60 }: Props) => { // slightly lar
                             </div>
                         )}
                         <div className="flex flex-col items-start leading-tight">
-                            <span className="truncate">{agencyName} <span className="text-muted-foreground mx-1">•</span> N°{newspaper?.issueNumber}</span>
+                            <span className="truncate">{agencyName} <span className="text-muted-foreground mx-1">•</span> Apparition {newspaper?.issueNumber}</span>
                             {newspaper?.publishDate && (
                                 <span className="text-xs text-muted-foreground font-normal">
                                     Publié le {formatDate(newspaper.publishDate, undefined, "d MMMM yyyy")}

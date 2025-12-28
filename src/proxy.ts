@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL;
 const laboUrl = process.env.NEXT_PUBLIC_LABO_URL;
 const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const adminHost = adminUrl ? new URL(adminUrl).hostname : "admin.kioskfy.com";
 const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
@@ -39,8 +40,17 @@ export default async function proxy(request: NextRequest) {
     // ============================================
     // Redirection globale: www.kioskfy.com/organization/* -> labo.kioskfy.com/organization/*
     // ============================================
-    if ((!subdomain || subdomain === 'www') && pathname.startsWith('/organization')) {
+    if (isProduction && (!subdomain || subdomain === 'www') && pathname.startsWith('/organization')) {
         const newUrl = new URL(pathname, `https://${laboHost}`);
+        newUrl.search = request.nextUrl.search;
+        return NextResponse.redirect(newUrl);
+    }
+
+    // ============================================
+    // Redirection globale: www.kioskfy.com/admin/* -> admin.kioskfy.com/admin/*
+    // ============================================
+    if (isProduction && (!subdomain || subdomain === 'www') && pathname.startsWith('/admin')) {
+        const newUrl = new URL(pathname, `https://${adminHost}`);
         newUrl.search = request.nextUrl.search;
         return NextResponse.redirect(newUrl);
     }

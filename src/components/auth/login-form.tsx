@@ -234,7 +234,12 @@ export function LoginForm() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <Button type="button" onClick={handleGoogleSignIn} variant="outline" disabled={isGoogleLoading}>
+                <Button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading}
+                    className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm"
+                >
                     {isGoogleLoading ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -259,7 +264,12 @@ export function LoginForm() {
                     )}
                     Google
                 </Button>
-                <Button type="button" onClick={handleFacebookSignIn} variant="outline" disabled={isFacebookLoading}>
+                <Button
+                    type="button"
+                    onClick={handleFacebookSignIn}
+                    disabled={isFacebookLoading}
+                    className="bg-[#1877F2] hover:bg-[#166FE5] text-white border-none"
+                >
                     {isFacebookLoading ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (

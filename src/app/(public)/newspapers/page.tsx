@@ -3,6 +3,8 @@ import { AllNewspapersPublished } from "@/components/newspapers/all-newspapers-p
 import { Newspaper } from "lucide-react";
 import Link from "next/link";
 import { CategoriesSection } from "@/components/categories-section";
+import { Header } from "@/components/menus/header";
+import { Footer } from "react-day-picker";
 
 export const metadata: Metadata = {
     title: "Journaux | Kioskfy - Kiosque Numérique Africain",
@@ -15,6 +17,8 @@ export const metadata: Metadata = {
 
 export default function NewspapersPage() {
     return (
+        <>
+        <Header />
         <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
             {/* Hero Section */}
             <section className="relative overflow-hidden border-b border-border/40">
@@ -69,5 +73,7 @@ export default function NewspapersPage() {
                 </div>
             </section>
         </main>
+        <Footer />
+    </>
     );
 }

@@ -239,3 +239,71 @@ export const ordersRelations = relations(orders, ({ one }) => ({
         references: [newspapers.id],
     }),
 }));
+
+// ============================================
+// Favorites Table
+// ============================================
+export const favorites = mysqlTable(
+    "favorites",
+    {
+        id: int("id").primaryKey().autoincrement(),
+        userId: varchar("userId", { length: 255 })
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        newspaperId: varchar("newspaperId", { length: 36 })
+            .notNull()
+            .references(() => newspapers.id, { onDelete: "cascade" }),
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+    },
+    (table) => [
+        index("favorites_userId_idx").on(table.userId),
+        index("favorites_newspaperId_idx").on(table.newspaperId),
+        uniqueIndex("favorites_user_newspaper_idx").on(table.userId, table.newspaperId),
+    ]
+);
+
+// Favorites relations
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+    user: one(users, {
+        fields: [favorites.userId],
+        references: [users.id],
+    }),
+    newspaper: one(newspapers, {
+        fields: [favorites.newspaperId],
+        references: [newspapers.id],
+    }),
+}));
+
+// ============================================
+// User Favorite Countries Table
+// ============================================
+export const userFavoriteCountries = mysqlTable(
+    "user_favorite_countries",
+    {
+        id: int("id").primaryKey().autoincrement(),
+        userId: varchar("userId", { length: 255 })
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        countryId: int("countryId")
+            .notNull()
+            .references(() => countries.id, { onDelete: "cascade" }),
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+    },
+    (table) => [
+        index("ufc_userId_idx").on(table.userId),
+        index("ufc_countryId_idx").on(table.countryId),
+        uniqueIndex("ufc_user_country_idx").on(table.userId, table.countryId),
+    ]
+);
+
+// User Favorite Countries relations
+export const userFavoriteCountriesRelations = relations(userFavoriteCountries, ({ one }) => ({
+    user: one(users, {
+        fields: [userFavoriteCountries.userId],
+        references: [users.id],
+    }),
+    country: one(countries, {
+        fields: [userFavoriteCountries.countryId],
+        references: [countries.id],
+    }),
+}));

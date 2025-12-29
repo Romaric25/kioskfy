@@ -10,6 +10,8 @@ import { paymentService } from './services/payment.service';
 import { uploadsService } from './services/uploads.service';
 import { organizationsService } from './services/organizations.service';
 import { usersService } from './services/users.service';
+import { favoritesService } from './services/favorites.service';
+import { favoriteCountriesService } from './services/favorite-countries.service';
 import { serverTiming } from '@elysiajs/server-timing'
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -44,7 +46,8 @@ const app = new Elysia({ prefix: '/api/v1' })
                     { name: 'Admin', description: 'Administration système' },
                     { name: 'Public', description: 'Endpoints publics' },
                     { name: 'Payment', description: 'Endpoints de paiement' },
-                    { name: 'Organizations', description: 'Endpoints des organisations' }
+                    { name: 'Organizations', description: 'Endpoints des organisations' },
+                    { name: 'Protected', description: 'Endpoints protégés (authentification requise)' }
                 ],
                 paths: await OpenAPI.getPaths(),
                 components: await OpenAPI.components,
@@ -59,6 +62,8 @@ const app = new Elysia({ prefix: '/api/v1' })
     .use(uploadsService)
     .use(organizationsService)
     .use(usersService)
+    .use(favoritesService)
+    .use(favoriteCountriesService)
     // Block /docs access in production
     .onBeforeHandle(({ request, set }) => {
         if (isProduction && request.url.includes('/api/v1/docs')) {

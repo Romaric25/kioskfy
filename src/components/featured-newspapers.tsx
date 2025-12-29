@@ -14,7 +14,7 @@ export function FeaturedNewspapers() {
   return (
     <Section
       title="À la une aujourd'hui"
-      description="Les journaux les plus lus ce matin en Afrique."
+      description="Les derniers journaux sortis ce jour-ci."
       action={{ label: "Voir tout", href: "/newspapers" }}
     >
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">

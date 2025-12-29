@@ -1,11 +1,16 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { Calendar, ShoppingBag, Eye } from "lucide-react";
+import { Calendar, ShoppingBag, Eye, Heart } from "lucide-react";
 import { NewspaperResponse } from "@/server/models/newspaper.model";
 import { formatDate } from "@/lib/helpers";
 import { priceFormatter } from "@/lib/price-formatter";
 import { Badge } from "./ui/badge";
+import { useCheckFavorite, useToggleFavorite } from "@/hooks/use-favorites.hook";
+import { useAuth } from "@/hooks/use-auth.hook";
+import toast from "react-hot-toast";
 
 interface NewspaperCardProps {
     newspaper: NewspaperResponse;
@@ -21,6 +26,21 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
         newspaper.country?.code || "fr-FR"
     );
     const coverImage = newspaper.coverImage || "/placeholder.jpg";
+
+    const { isAuthenticated } = useAuth();
+    const { isFavorite } = useCheckFavorite(newspaper.id, isAuthenticated);
+    const toggleFavorite = useToggleFavorite();
+
+    const handleFavorite = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isAuthenticated) {
+            toast.error("Connectez-vous pour ajouter aux favoris");
+            return;
+        }
+        toggleFavorite.mutate(newspaper.id);
+    };
 
     return (
         <div className="group relative flex flex-col gap-4">
@@ -42,6 +62,23 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                                     )}
                                     <span className="font-medium text-xs text-foreground/80">{newspaper.country?.name}</span>
                                 </Badge>
+                            </div>
+
+                            {/* Bouton Favori - Toujours visible en haut à droite */}
+                            <div className="absolute top-3 right-3 z-20">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={handleFavorite}
+                                    disabled={toggleFavorite.isPending}
+                                    className={`h-8 w-8 rounded-full backdrop-blur shadow-sm transition-all duration-200 ${isFavorite
+                                            ? "bg-red-500 hover:bg-red-600 text-white"
+                                            : "bg-white/90 dark:bg-black/80 hover:bg-red-50 hover:text-red-500"
+                                        }`}
+                                    title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                                >
+                                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                                </Button>
                             </div>
 
                             {/* Badge Prix - Flottant en bas à droite */}

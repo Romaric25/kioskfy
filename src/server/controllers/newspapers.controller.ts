@@ -173,6 +173,89 @@ export class NewspapersController {
         };
     }
 
+    // Get published newspapers with pagination (for infinite scroll)
+    static async getPublishedNewspapersPaginated(
+        options: { limit?: number; cursor?: number; type?: "Journal" | "Magazine" } = {}
+    ) {
+        const { limit = 12, cursor = 0, type = "Journal" } = options;
+
+        const publishedNewspapers = await db
+            .select({
+                id: newspapers.id,
+                coverImage: newspapers.coverImage,
+                price: newspapers.price,
+                publishDate: newspapers.publishDate,
+                issueNumber: newspapers.issueNumber,
+                pdf: newspapers.pdf,
+                status: newspapers.status,
+                createdAt: newspapers.createdAt,
+                updatedAt: newspapers.updatedAt,
+                // Organization data
+                organization: {
+                    id: organizations.id,
+                    name: organizations.name,
+                    slug: organizations.slug,
+                    logo: organizations.logo,
+                    metadata: organizations.metadata,
+                },
+                // Country data
+                country: {
+                    id: countries.id,
+                    name: countries.name,
+                    slug: countries.slug,
+                    flag: countries.flag,
+                    code: countries.code,
+                    currency: countries.currency,
+                },
+            })
+            .from(newspapers)
+            .leftJoin(organizations, eq(newspapers.organizationId, organizations.id))
+            .leftJoin(countries, eq(newspapers.countryId, countries.id))
+            .where(
+                and(
+                    eq(newspapers.status, Status.PUBLISHED),
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    sql`JSON_UNQUOTE(JSON_EXTRACT(${organizations.metadata}, '$.type')) = ${type}`
+                )
+            )
+            .orderBy(desc(newspapers.publishDate))
+            .limit(limit + 1)
+            .offset(cursor);
+
+        // Check if there are more items
+        const hasMore = publishedNewspapers.length > limit;
+        const dataSlice = hasMore ? publishedNewspapers.slice(0, limit) : publishedNewspapers;
+
+        // Fetch categories for each newspaper
+        const newspapersWithCategories = await Promise.all(
+            dataSlice.map(async (newspaper) => {
+                const newspaperCategories = await db
+                    .select({
+                        id: categories.id,
+                        name: categories.name,
+                        slug: categories.slug,
+                        icon: categories.icon,
+                        color: categories.color,
+                    })
+                    .from(newspapersCategories)
+                    .innerJoin(categories, eq(newspapersCategories.categoriesId, categories.id))
+                    .where(eq(newspapersCategories.newspapersId, newspaper.id));
+
+                return {
+                    ...newspaper,
+                    categories: newspaperCategories,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            data: newspapersWithCategories,
+            nextCursor: hasMore ? cursor + limit : undefined,
+            total: newspapersWithCategories.length,
+        };
+    }
+
     // Get all published magazines with relations (for public)
     static async getPublishedMagazines() {
         const publishedNewspapers = await db
@@ -362,8 +445,14 @@ export class NewspapersController {
         };
     }
 
-    // Get newspapers by organization ID
-    static async getByOrganization(organizationId: string) {
+    // Get newspapers by organization ID (with pagination)
+    static async getByOrganization(
+        organizationId: string,
+        options: { limit?: number; cursor?: number; excludeId?: string } = {}
+    ) {
+        const { limit = 6, cursor = 0, excludeId } = options;
+
+        // Fetch one extra to determine if there are more items
         const orgNewspapers = await db
             .select({
                 id: newspapers.id,
@@ -374,14 +463,51 @@ export class NewspapersController {
                 pdf: newspapers.pdf,
                 status: newspapers.status,
                 createdAt: newspapers.createdAt,
+                // Organization data for NewspaperCard
+                organization: {
+                    id: organizations.id,
+                    name: organizations.name,
+                    slug: organizations.slug,
+                    logo: organizations.logo,
+                },
+                // Country data for NewspaperCard
+                country: {
+                    id: countries.id,
+                    name: countries.name,
+                    slug: countries.slug,
+                    flag: countries.flag,
+                    code: countries.code,
+                    currency: countries.currency,
+                },
             })
             .from(newspapers)
-            .where(eq(newspapers.organizationId, organizationId))
-            .orderBy(desc(newspapers.publishDate));
+            .leftJoin(organizations, eq(newspapers.organizationId, organizations.id))
+            .leftJoin(countries, eq(newspapers.countryId, countries.id))
+            .where(
+                excludeId
+                    ? and(
+                        eq(newspapers.organizationId, organizationId),
+                        eq(newspapers.status, Status.PUBLISHED),
+                        sql`${newspapers.id} != ${excludeId}`
+                    )
+                    : and(
+                        eq(newspapers.organizationId, organizationId),
+                        eq(newspapers.status, Status.PUBLISHED)
+                    )
+            )
+            .orderBy(desc(newspapers.publishDate))
+            .limit(limit + 1)
+            .offset(cursor);
+
+        // Check if there are more items
+        const hasMore = orgNewspapers.length > limit;
+        const data = hasMore ? orgNewspapers.slice(0, limit) : orgNewspapers;
 
         return {
             success: true,
-            data: orgNewspapers,
+            data,
+            nextCursor: hasMore ? cursor + limit : undefined,
+            total: data.length,
         };
     }
 

@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange } from "lucide-react";
+import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange, Share2, Heart } from "lucide-react";
 import { formatDate } from "@/lib/helpers";
 import { useLocale } from "next-intl";
 import { useCartStore } from "@/stores/cart.store";
@@ -30,6 +30,10 @@ import { useCartStore } from "@/stores/cart.store";
 import { NewspaperSkeleton } from "@/components/skeletons/newspaper-skeleton";
 import { FrequencyContent } from "@/components/frequency-content";
 import { priceFormatter } from "@/lib/price-formatter";
+import toast from "react-hot-toast";
+import { useCheckFavorite, useToggleFavorite } from "@/hooks/use-favorites.hook";
+import { useAuth } from "@/hooks/use-auth.hook";
+import { RelatedNewspapers } from "@/components/newspapers/related-newspapers";
 
 
 export const SingleNewspaper = () => {
@@ -40,6 +44,10 @@ export const SingleNewspaper = () => {
 
     const inCart = newspaper ? items.some((item) => item.id === newspaper.id) : false;
 
+    const { isAuthenticated } = useAuth();
+    const { isFavorite, isCheckingFavorite } = useCheckFavorite(id as string, isAuthenticated);
+    const toggleFavorite = useToggleFavorite();
+
     const handleCartAction = () => {
         if (!newspaper) return;
         if (inCart) {
@@ -47,6 +55,38 @@ export const SingleNewspaper = () => {
         } else {
             addItem(newspaper);
         }
+    };
+
+    const handleShare = async () => {
+        if (!newspaper) return;
+
+        const shareData = {
+            title: newspaper.issueNumber,
+            text: `Découvrez ${newspaper.issueNumber} sur Kioskfy`,
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Lien copié dans le presse-papier");
+            }
+        } catch (error) {
+            if ((error as Error).name !== "AbortError") {
+                toast.error("Erreur lors du partage");
+            }
+        }
+    };
+
+    const handleFavorite = () => {
+        if (!isAuthenticated) {
+            toast.error("Connectez-vous pour ajouter aux favoris");
+            return;
+        }
+        if (!newspaper) return;
+        toggleFavorite.mutate(newspaper.id);
     };
 
     if (newspaperLoading) {
@@ -57,9 +97,9 @@ export const SingleNewspaper = () => {
         return (
             <Alert variant="destructive" className="max-w-2xl mx-auto mt-8">
                 <AlertCircleIcon className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>Erreur</AlertTitle>
                 <AlertDescription>
-                    Failed to load newspaper details. Please try again later.
+                    Une erreur est survenue lors du chargement des détails du journal. Veuillez réessayer plus tard.
                 </AlertDescription>
             </Alert>
         );
@@ -69,9 +109,9 @@ export const SingleNewspaper = () => {
         return (
             <Alert className="max-w-2xl mx-auto mt-8">
                 <AlertCircleIcon className="h-4 w-4" />
-                <AlertTitle>Not Found</AlertTitle>
+                <AlertTitle>Erreur</AlertTitle>
                 <AlertDescription>
-                    This newspaper could not be found.
+                    Ce journal n'a pas été trouvé.
                 </AlertDescription>
             </Alert>
         );
@@ -130,9 +170,35 @@ export const SingleNewspaper = () => {
                             {newspaper.issueNumber}
                         </h1>
 
-                        <div className="flex items-center text-muted-foreground mb-6">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            <span>{formatDate(newspaper.publishDate, "d MMM yyyy")}</span>
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center text-muted-foreground">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <span>{formatDate(newspaper.publishDate, "d MMM yyyy")}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={handleShare}
+                                    className="rounded-full"
+                                    title="Partager"
+                                >
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant={isFavorite ? "default" : "outline"}
+                                    size="icon"
+                                    onClick={handleFavorite}
+                                    disabled={toggleFavorite.isPending}
+                                    className={`rounded-full transition-all duration-200 ${isFavorite
+                                        ? "bg-red-500 hover:bg-red-600 text-white border-red-500"
+                                        : "hover:border-red-300 hover:text-red-500"
+                                        }`}
+                                    title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                                >
+                                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -217,6 +283,15 @@ export const SingleNewspaper = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Related Newspapers from same publisher */}
+            {newspaper.organization?.id && (
+                <RelatedNewspapers
+                    organizationId={newspaper.organization.id}
+                    organizationName={newspaper.organization.name}
+                    currentNewspaperId={newspaper.id}
+                />
+            )}
         </div>
     );
 };

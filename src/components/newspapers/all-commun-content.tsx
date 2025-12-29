@@ -1,113 +1,65 @@
 "use client";
 
-import { usePublishedNewspapers } from "@/hooks/use-newspapers.hook";
+import { useInfinitePublishedNewspapers } from "@/hooks/use-newspapers.hook";
 import { NewspaperCard } from "@/components/newspaper-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { NewspapersGridSkeleton, NewspaperCardSkeleton } from "@/components/newspapers/newspapers-skeleton";
 import { EmptyState, ErrorState } from "@/components/newspapers/newspapers-states";
 import { Loader2, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { NewspaperResponse } from "@/server/models/newspaper.model";
+import { useEffect, useRef, useMemo, useCallback } from "react";
 
 const ITEMS_PER_PAGE = 12;
 
-interface AllNewspapersPublishedProps {
+interface AllCommunContentProps {
     title?: string;
     showTitle?: boolean;
-    limit?: number;
-    enableInfiniteScroll?: boolean;
-    data?: NewspaperResponse[];
-    isLoading?: boolean;
-    isError?: boolean;
-    error: Error | null;
+    type?: "Journal" | "Magazine";
 }
 
 export function AllCommunContent({
     title = "Journaux publiés",
     showTitle = true,
-    limit,
-    enableInfiniteScroll = true,
-    data,
-    isLoading,
-    isError,
-    error
-}: AllNewspapersPublishedProps) {
-    const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    type = "Journal",
+}: AllCommunContentProps) {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetching,
+        isFetchingNextPage,
+        status,
+        error,
+    } = useInfinitePublishedNewspapers({
+        type,
+        limit: ITEMS_PER_PAGE,
+    });
+
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Gérer le rechargement
-    const handleRetry = () => {
-        window.location.reload();
-    };
+    // Flatten all pages into a single array
+    const allNewspapers = useMemo(() => {
+        return data?.pages.flatMap((page) => page.data) ?? [];
+    }, [data?.pages]);
 
-    // Extraire les données des journaux
-    const newspapersList = data || [];
-
-    // Déterminer les journaux à afficher
-    const getDisplayedNewspapers = useCallback(() => {
-        if (limit) {
-            return newspapersList.slice(0, limit);
-        }
-        if (enableInfiniteScroll) {
-            return newspapersList.slice(0, displayCount);
-        }
-        return newspapersList;
-    }, [newspapersList, limit, enableInfiniteScroll, displayCount]);
-
-    const displayedNewspapers = getDisplayedNewspapers();
-    const hasMore = !limit && enableInfiniteScroll && displayCount < newspapersList.length;
-
-    // Charger plus de journaux
-    const loadMore = useCallback(() => {
-        if (isLoadingMore || !hasMore) return;
-
-        setIsLoadingMore(true);
-        // Simuler un petit délai pour une meilleure UX
-        setTimeout(() => {
-            setDisplayCount((prev) => Math.min(prev + ITEMS_PER_PAGE, newspapersList.length));
-            setIsLoadingMore(false);
-        }, 400);
-    }, [isLoadingMore, hasMore, newspapersList.length]);
-
-    // Vérifier si le contenu dépasse le viewport (pour activer l'infinite scroll)
-    const [canAutoLoad, setCanAutoLoad] = useState(false);
+    // Intersection Observer for infinite scroll
+    const handleObserver = useCallback(
+        (entries: IntersectionObserverEntry[]) => {
+            const [entry] = entries;
+            if (entry.isIntersecting && hasNextPage && !isFetching) {
+                fetchNextPage();
+            }
+        },
+        [hasNextPage, isFetching, fetchNextPage]
+    );
 
     useEffect(() => {
-        // Vérifier si le container dépasse le viewport après le rendu initial
-        const checkHeight = () => {
-            if (containerRef.current) {
-                const containerBottom = containerRef.current.getBoundingClientRect().bottom;
-                const viewportHeight = window.innerHeight;
-                // Si le container dépasse le viewport, activer l'auto-load
-                setCanAutoLoad(containerBottom > viewportHeight + 100);
-            }
-        };
-
-        // Attendre le rendu
-        const timer = setTimeout(checkHeight, 100);
-        return () => clearTimeout(timer);
-    }, [displayedNewspapers.length]);
-
-    // Observer pour le défilement infini (seulement si le contenu dépasse le viewport)
-    useEffect(() => {
-        if (!enableInfiniteScroll || limit || !canAutoLoad) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                const [entry] = entries;
-                if (entry.isIntersecting && hasMore && !isLoadingMore) {
-                    loadMore();
-                }
-            },
-            {
-                root: null,
-                rootMargin: "200px",
-                threshold: 0,
-            }
-        );
+        const observer = new IntersectionObserver(handleObserver, {
+            root: null,
+            rootMargin: "200px",
+            threshold: 0,
+        });
 
         const currentRef = loadMoreRef.current;
         if (currentRef) {
@@ -119,16 +71,15 @@ export function AllCommunContent({
                 observer.unobserve(currentRef);
             }
         };
-    }, [enableInfiniteScroll, limit, hasMore, isLoadingMore, loadMore, canAutoLoad]);
+    }, [handleObserver]);
 
-    // Réinitialiser le compteur quand les données changent
-    useEffect(() => {
-        setDisplayCount(ITEMS_PER_PAGE);
-        setCanAutoLoad(false);
-    }, [data]);
+    // Gérer le rechargement
+    const handleRetry = () => {
+        window.location.reload();
+    };
 
     // État de chargement initial
-    if (isLoading) {
+    if (status === "pending") {
         return (
             <section className="py-8">
                 {showTitle && (
@@ -137,13 +88,13 @@ export function AllCommunContent({
                         <Skeleton className="h-4 w-96" />
                     </div>
                 )}
-                <NewspapersGridSkeleton count={limit || ITEMS_PER_PAGE} />
+                <NewspapersGridSkeleton count={ITEMS_PER_PAGE} />
             </section>
         );
     }
 
     // État d'erreur
-    if (isError) {
+    if (status === "error") {
         return (
             <section className="py-8">
                 <ErrorState onRetry={handleRetry} />
@@ -152,7 +103,7 @@ export function AllCommunContent({
     }
 
     // État vide
-    if (newspapersList.length === 0) {
+    if (allNewspapers.length === 0) {
         return (
             <section className="py-8">
                 <EmptyState />
@@ -178,7 +129,7 @@ export function AllCommunContent({
 
             {/* Grille de journaux avec animation d'entrée */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                {displayedNewspapers.map((newspaper, index) => (
+                {allNewspapers.map((newspaper, index) => (
                     <div
                         key={newspaper.id}
                         className="animate-in fade-in slide-in-from-bottom-4 duration-500"
@@ -189,60 +140,40 @@ export function AllCommunContent({
                 ))}
 
                 {/* Skeletons pendant le chargement de plus d'éléments */}
-                {isLoadingMore &&
-                    Array.from({ length: Math.min(ITEMS_PER_PAGE, newspapersList.length - displayCount) }).map((_, i) => (
+                {isFetchingNextPage &&
+                    Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
                         <NewspaperCardSkeleton key={`skeleton-${i}`} />
                     ))}
             </div>
 
-            {/* Zone de chargement */}
-            {enableInfiniteScroll && !limit && hasMore && (
-                <div ref={loadMoreRef} className="mt-8 flex flex-col items-center justify-center">
-                    {canAutoLoad ? (
-                        // Indicateur de chargement automatique
+            {/* Zone de chargement / Infinite scroll trigger + Manual button */}
+            {hasNextPage && (
+                <div ref={loadMoreRef} className="mt-8 flex flex-col items-center justify-center gap-4">
+                    {isFetchingNextPage ? (
                         <div className="flex items-center gap-2 text-muted-foreground py-4">
                             <Loader2 className="h-5 w-5 animate-spin" />
                             <span className="text-sm">Chargement...</span>
                         </div>
                     ) : (
-                        // Bouton pour charger plus manuellement
                         <Button
                             variant="outline"
                             size="lg"
-                            onClick={loadMore}
-                            disabled={isLoadingMore}
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
                             className="gap-2"
                         >
-                            {isLoadingMore ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Chargement...
-                                </>
-                            ) : (
-                                <>
-                                    <ChevronDown className="h-4 w-4" />
-                                    Afficher plus de journaux
-                                </>
-                            )}
+                            <ChevronDown className="h-4 w-4" />
+                            Charger plus
                         </Button>
                     )}
                 </div>
             )}
 
             {/* Indicateur de fin */}
-            {enableInfiniteScroll && !limit && !hasMore && newspapersList.length > ITEMS_PER_PAGE && (
+            {!hasNextPage && allNewspapers.length > ITEMS_PER_PAGE && (
                 <div className="mt-8 text-center py-4">
                     <p className="text-sm text-muted-foreground">
-                        {newspapersList.length} journal{newspapersList.length > 1 ? "x" : ""} affiché{newspapersList.length > 1 ? "s" : ""}
-                    </p>
-                </div>
-            )}
-
-            {/* Afficher info si une limite est définie */}
-            {limit && newspapersList.length > limit && (
-                <div className="mt-8 text-center">
-                    <p className="text-sm text-muted-foreground">
-                        Affichage de {displayedNewspapers.length} sur {newspapersList.length} journaux
+                        {allNewspapers.length} {type === "Journal" ? "journaux" : "magazines"} affichés
                     </p>
                 </div>
             )}

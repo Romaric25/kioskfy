@@ -36,6 +36,13 @@
       "when": 1766271846411,
       "tag": "0004_low_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1766961960619,
+      "tag": "0005_naive_dark_beast",
+      "breakpoints": true
     }
   ]
 }

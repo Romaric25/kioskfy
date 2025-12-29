@@ -1,5 +1,5 @@
 import { client } from "@/lib/client"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 import { NewspaperResponse, UpdateNewspaper, CreateNewspaper, Status } from "@/server/models/newspaper.model"
 
 
@@ -35,6 +35,37 @@ export const usePublishedMagazines = () => {
 
     return { magazines, magazinesLoading, magazinesError }
 }
+
+// Response type for paginated published newspapers
+interface PaginatedPublishedResponse {
+    success: boolean;
+    data: NewspaperResponse[];
+    nextCursor?: number;
+    total: number;
+}
+
+// Hook for infinite scroll published newspapers/magazines
+export const useInfinitePublishedNewspapers = (
+    options: { type?: "Journal" | "Magazine"; limit?: number } = {}
+) => {
+    const { type = "Journal", limit = 12 } = options;
+
+    return useInfiniteQuery({
+        queryKey: ['newspapers-published-infinite', type],
+        queryFn: async ({ pageParam = 0 }) => {
+            const response = await client.api.v1.newspapers["published-paginated"].get({
+                query: {
+                    cursor: pageParam.toString(),
+                    limit: limit.toString(),
+                    type,
+                },
+            });
+            return response.data as PaginatedPublishedResponse;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
+    });
+}
 // Hook for all newspapers (admin)
 export const useAllNewspapers = () => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
@@ -60,7 +91,7 @@ export const useNewspaper = (id: string) => {
     return { newspaper, newspaperLoading, newspaperError }
 }
 
-// Hook for newspapers by organization
+// Hook for newspapers by organization (simple, non-paginated - kept for backward compatibility)
 export const useNewspapersByOrganization = (organizationId: string) => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
         queryKey: ['newspapers-organization', organizationId],
@@ -69,6 +100,39 @@ export const useNewspapersByOrganization = (organizationId: string) => {
     })
     const newspapers = data?.data;
     return { newspapers, newspapersLoading, newspapersError }
+}
+
+// Response type for paginated organization newspapers
+interface PaginatedNewspapersResponse {
+    success: boolean;
+    data: NewspaperResponse[];
+    nextCursor?: number;
+    total: number;
+}
+
+// Hook for infinite scroll newspapers by organization
+export const useInfiniteNewspapersByOrganization = (
+    organizationId: string,
+    options: { excludeId?: string; limit?: number } = {}
+) => {
+    const { excludeId, limit = 6 } = options;
+
+    return useInfiniteQuery({
+        queryKey: ['newspapers-organization-infinite', organizationId, excludeId],
+        queryFn: async ({ pageParam = 0 }) => {
+            const response = await client.api.v1.newspapers.organization({ organizationId }).get({
+                query: {
+                    cursor: pageParam.toString(),
+                    limit: limit.toString(),
+                    ...(excludeId ? { excludeId } : {}),
+                },
+            });
+            return response.data as PaginatedNewspapersResponse;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
+        enabled: !!organizationId,
+    });
 }
 
 // Hook for newspapers by country

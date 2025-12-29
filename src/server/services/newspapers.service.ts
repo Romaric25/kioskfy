@@ -87,6 +87,32 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
+    // Get published newspapers/magazines with pagination (for infinite scroll)
+    .get(
+        "/published-paginated",
+        async ({ query }) => {
+            const limit = query.limit ? parseInt(query.limit) : 12;
+            const cursor = query.cursor ? parseInt(query.cursor) : 0;
+            const type = (query.type as "Journal" | "Magazine") || "Journal";
+            return await NewspapersController.getPublishedNewspapersPaginated({
+                limit,
+                cursor,
+                type,
+            });
+        },
+        {
+            query: t.Object({
+                limit: t.Optional(t.String()),
+                cursor: t.Optional(t.String()),
+                type: t.Optional(t.String()),
+            }),
+            detail: {
+                tags: ["Public"],
+                summary: "Récupérer les journaux/magazines publiés (paginé)",
+                description: "Retourne les éléments publiés avec pagination pour le défilement infini. Type: 'Journal' ou 'Magazine'",
+            },
+        }
+    )
     // Get all newspapers (admin)
     .get(
         "/all",
@@ -122,20 +148,32 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
-    // Get newspapers by organization
+    // Get newspapers by organization (with pagination for infinite scroll)
     .get(
         "/organization/:organizationId",
-        async ({ params: { organizationId } }) => {
-            return await NewspapersController.getByOrganization(organizationId);
+        async ({ params: { organizationId }, query }) => {
+            const limit = query.limit ? parseInt(query.limit) : 6;
+            const cursor = query.cursor ? parseInt(query.cursor) : 0;
+            const excludeId = query.excludeId;
+            return await NewspapersController.getByOrganization(organizationId, {
+                limit,
+                cursor,
+                excludeId,
+            });
         },
         {
             params: t.Object({
                 organizationId: t.String({ minLength: 1 }),
             }),
+            query: t.Object({
+                limit: t.Optional(t.String()),
+                cursor: t.Optional(t.String()),
+                excludeId: t.Optional(t.String()),
+            }),
             detail: {
-                tags: ["Admin"],
-                summary: "Récupérer les journaux d'une organisation",
-                description: "Retourne tous les journaux d'une organisation spécifique",
+                tags: ["Public"],
+                summary: "Récupérer les journaux d'une organisation (paginé)",
+                description: "Retourne les journaux publiés d'une organisation avec pagination pour le défilement infini",
             },
         }
     )

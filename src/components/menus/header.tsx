@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, useState } from "react";
+import { Activity, useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -93,10 +93,12 @@ export function Header() {
             {/* Actions area */}
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Search Desktop */}
-              <SearchBar
-                className="hidden lg:block w-full max-w-xs"
-                inputClassName="w-64 focus-visible:w-72"
-              />
+              <Suspense fallback={<div className="hidden lg:block w-full max-w-xs h-10" />}>
+                <SearchBar
+                  className="hidden lg:block w-full max-w-xs"
+                  inputClassName="w-64 focus-visible:w-72"
+                />
+              </Suspense>
 
               {/* Partner Button - Premium Gold Style */}
               <Button
@@ -268,10 +270,12 @@ export function Header() {
 
           {/* Mobile Search Bar - Visible only on mobile below the main header row */}
           <div className="md:hidden pb-3 animate-in fade-in slide-in-from-top-2">
-            <SearchBar
-              inputClassName="w-full"
-              placeholder="Rechercher..."
-            />
+            <Suspense fallback={null}>
+              <SearchBar
+                inputClassName="w-full"
+                placeholder="Rechercher..."
+              />
+            </Suspense>
           </div>
         </div>
       </header>

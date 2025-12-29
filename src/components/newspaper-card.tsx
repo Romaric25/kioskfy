@@ -110,9 +110,6 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                                 <Button size="sm" variant="secondary" className="rounded-full h-10 w-10 p-0 shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
                                     <Eye className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" className="rounded-full h-10 w-10 p-0 shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-100">
-                                    <ShoppingBag className="h-4 w-4" />
-                                </Button>
                             </div>
                         </div>
                     </div>

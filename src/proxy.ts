@@ -56,6 +56,13 @@ export default async function proxy(request: NextRequest) {
     }
 
     // ============================================
+    // ============================================
+    // Routes d'authentification partagées (prioritaire sur les redirections de sous-domaine)
+    const sharedAuthRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    if (sharedAuthRoutes.some(route => pathname.startsWith(route))) {
+        return NextResponse.next();
+    }
+
     // Redirections pour les sous-domaines admin et labo
     // Sur labo.kioskfy.com : toutes les routes qui ne commencent pas par /organization -> /organization/dashboard
     // Sur admin.kioskfy.com : toutes les routes qui ne commencent pas par /admin -> /admin/dashboard
@@ -84,11 +91,7 @@ export default async function proxy(request: NextRequest) {
         }
     }
 
-    // Routes d'authentification partagées (seulement pour le domaine principal)
-    const sharedAuthRoutes = ['/login', '/register', '/forgot-password'];
-    if (sharedAuthRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.next();
-    }
+
 
     // Gestion des Tenants Dynamiques (Agences)
     // admin et labo sont gérés par next.config.ts, on ne les touche pas ici
@@ -110,7 +113,7 @@ export default async function proxy(request: NextRequest) {
     const isClient = session?.user?.typeUser === "client";
 
     const ProtectedRoutes = ["/admin", "/dashboard", "/organization/dashboard", '/cart'];
-    const publicRoutes = ["/organization/login", "/organization/subscription", "/login", "/register"];
+    const publicRoutes = ["/organization/login", "/organization/subscription", "/login", "/register", "/forgot-password", "/reset-password"];
 
     const isProtectedRoute = ProtectedRoutes.some(
         (route) => pathname === route || pathname.startsWith(route + "/")

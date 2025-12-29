@@ -22,7 +22,7 @@ export function RecentFavorites({ favorites, isLoading, totalCount }: RecentFavo
         <div className="grid gap-4">
             <Card className="col-span-full">
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-1">
                             <CardTitle>Favoris récents</CardTitle>
                             <CardDescription>
@@ -30,7 +30,7 @@ export function RecentFavorites({ favorites, isLoading, totalCount }: RecentFavo
                             </CardDescription>
                         </div>
                         {totalCount > 0 && (
-                            <Button asChild variant="outline" size="sm">
+                            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                                 <Link href="/dashboard/favoris">
                                     Voir tout
                                     <ArrowUpRight className="ml-1 h-4 w-4" />
@@ -58,7 +58,7 @@ export function RecentFavorites({ favorites, isLoading, totalCount }: RecentFavo
                             </Button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                             {favorites.map((fav) => (
                                 <NewspaperCard key={fav.id} newspaper={fav.newspaper} />
                             ))}

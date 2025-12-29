@@ -2,6 +2,7 @@
 
 import { Activity, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -15,6 +16,7 @@ import {
   ChevronRight,
   Sparkles
 } from "lucide-react";
+import { SearchBar } from "@/components/search-bar";
 import { Logo } from "../ui/logo";
 import { useCartStore } from "@/stores/cart.store";
 import { useAuth } from "@/hooks/use-auth.hook";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Header() {
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const isAgency = user?.typeUser === "agency";
@@ -59,13 +62,27 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1 p-1 bg-muted/30 rounded-full border border-border/40 backdrop-blur-sm">
-              <Button variant="ghost" className="rounded-full gap-2 h-9 px-4 text-muted-foreground hover:text-foreground hover:bg-background shadow-none hover:shadow-sm transition-all" asChild>
+              <Button
+                variant={pathname?.startsWith("/newspapers") ? "secondary" : "ghost"}
+                className={`rounded-full gap-2 h-9 px-4 shadow-none transition-all ${pathname?.startsWith("/newspapers")
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
+                  }`}
+                asChild
+              >
                 <Link href="/newspapers">
                   <Newspaper className="h-4 w-4" />
                   Journaux
                 </Link>
               </Button>
-              <Button variant="ghost" className="rounded-full gap-2 h-9 px-4 text-muted-foreground hover:text-foreground hover:bg-background shadow-none hover:shadow-sm transition-all" asChild>
+              <Button
+                variant={pathname?.startsWith("/magazines") ? "secondary" : "ghost"}
+                className={`rounded-full gap-2 h-9 px-4 shadow-none transition-all ${pathname?.startsWith("/magazines")
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
+                  }`}
+                asChild
+              >
                 <Link href="/magazines">
                   <BookOpen className="h-4 w-4" />
                   Magazines
@@ -76,14 +93,10 @@ export function Header() {
             {/* Actions area */}
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Search Desktop */}
-              <div className="relative hidden lg:block w-full max-w-xs group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input
-                  type="search"
-                  placeholder="Rechercher un journal..."
-                  className="h-10 w-64 rounded-full border-muted-foreground/20 bg-muted/20 pl-10 text-sm shadow-none focus-visible:w-72 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-primary transition-all duration-300"
-                />
-              </div>
+              <SearchBar
+                className="hidden lg:block w-full max-w-xs"
+                inputClassName="w-64 focus-visible:w-72"
+              />
 
               {/* Partner Button - Premium Gold Style */}
               <Button
@@ -182,7 +195,7 @@ export function Header() {
                 </Popover>
 
                 {/* Auth */}
-              
+
                 <Activity mode={isAuthenticated ? "visible" : "hidden"}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -225,7 +238,7 @@ export function Header() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </Activity>
-              
+
                 <Activity mode={isAuthenticated ? "hidden" : "visible"}>
                   <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-muted/50" asChild>
                     <Link href="/login">
@@ -233,7 +246,7 @@ export function Header() {
                     </Link>
                   </Button>
                 </Activity>
-               
+
 
                 <div className="mx-1">
                   <ThemeToggle />
@@ -255,14 +268,10 @@ export function Header() {
 
           {/* Mobile Search Bar - Visible only on mobile below the main header row */}
           <div className="md:hidden pb-3 animate-in fade-in slide-in-from-top-2">
-            <div className="relative w-full group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                type="search"
-                placeholder="Rechercher..."
-                className="h-10 w-full rounded-full border-muted-foreground/20 bg-muted/20 pl-10 text-sm shadow-none focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-primary transition-all duration-300"
-              />
-            </div>
+            <SearchBar
+              inputClassName="w-full"
+              placeholder="Rechercher..."
+            />
           </div>
         </div>
       </header>
@@ -335,8 +344,8 @@ export function Header() {
                 {/* Account Routes */}
                 <div className="space-y-1">
                   <h4 className="text-xs font-semibold text-muted-foreground mb-3 px-2 uppercase tracking-wider">Mon Compte</h4>
-          
-                  <Activity mode={isAuthenticated ? "visible" : "hidden"}> 
+
+                  <Activity mode={isAuthenticated ? "visible" : "hidden"}>
                     <Link
                       href="/dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -351,7 +360,7 @@ export function Header() {
                       <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                     </Link>
                   </Activity>
-              
+
                   <Activity mode={isAuthenticated ? "hidden" : "visible"}>
                     <div className="px-2">
                       <Button className="w-full rounded-full shadow-md" onClick={() => setIsMobileMenuOpen(false)} asChild>
@@ -359,7 +368,7 @@ export function Header() {
                       </Button>
                     </div>
                   </Activity>
-                 
+
                 </div>
 
                 {/* Partnership */}

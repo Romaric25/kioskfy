@@ -94,10 +94,12 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             const limit = query.limit ? parseInt(query.limit) : 12;
             const cursor = query.cursor ? parseInt(query.cursor) : 0;
             const type = (query.type as "Journal" | "Magazine") || "Journal";
+            const search = query.search;
             return await NewspapersController.getPublishedNewspapersPaginated({
                 limit,
                 cursor,
                 type,
+                search,
             });
         },
         {
@@ -105,6 +107,7 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
                 limit: t.Optional(t.String()),
                 cursor: t.Optional(t.String()),
                 type: t.Optional(t.String()),
+                search: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Public"],

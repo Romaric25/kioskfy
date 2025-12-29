@@ -8,6 +8,9 @@ import { users as userTable } from "@/db/auth-schema";
 import { eq } from "drizzle-orm";
 import { nextCookies } from "better-auth/next-js";
 import { hashPassword, verifyPassword } from "./argon2";
+import { render } from "@react-email/components";
+import { ResetPasswordEmail } from "@/emails/resetPasswordEmail";
+import { sendEmail } from "@/lib/email";
 
 const isProduction = process.env.NODE_ENV === 'production';
 export const auth = betterAuth({
@@ -77,6 +80,19 @@ export const auth = betterAuth({
         password: {
             hash: hashPassword,
             verify: verifyPassword,
+        },
+        sendResetPassword: async ({ user, url }) => {
+            const emailHtml = await render(
+                ResetPasswordEmail({
+                    url: url,
+                    name: user.name,
+                })
+            );
+            await sendEmail({
+                to: user.email,
+                subject: "Réinitialisation de mot de passe",
+                html: emailHtml,
+            });
         },
     },
     user: {

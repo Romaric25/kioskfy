@@ -26,6 +26,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import {
     DropdownMenu,
@@ -35,6 +36,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 const navigationItems = [
     {
@@ -76,21 +78,28 @@ const navigationItems = [
 
 export function AppSidebar() {
     const { user, logout } = useAuth();
+    const { isMobile, setOpenMobile } = useSidebar();
     const pathname = usePathname();
 
     const userInitials = user?.name
         ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
         : "U";
 
+    const handleLinkClick = () => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    };
+
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild onClick={handleLinkClick}>
                             <Link href="/">
-                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                    <Newspaper className="size-4" />
+                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-primary-foreground">
+                                    <Image src="/favicon.ico" alt="Logo" width={30} height={30} />
                                 </div>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-semibold">Kioskfy</span>
@@ -115,6 +124,7 @@ export function AppSidebar() {
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
+                                                onClick={handleLinkClick}
                                             >
                                                 <Link href={item.url}>
                                                     <item.icon />
@@ -172,20 +182,20 @@ export function AppSidebar() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
+                                <DropdownMenuItem asChild onClick={handleLinkClick}>
                                     <Link href="/dashboard/profil">
                                         <User className="mr-2 h-4 w-4" />
                                         Mon profil
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
+                                <DropdownMenuItem asChild onClick={handleLinkClick}>
                                     <Link href="/dashboard/parametres">
                                         <Settings className="mr-2 h-4 w-4" />
                                         Paramètres
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem onClick={() => { handleLinkClick(); logout(); }} className="text-destructive focus:text-destructive">
                                     <LogOut className="mr-2 h-4 w-4" />
                                     Déconnexion
                                 </DropdownMenuItem>

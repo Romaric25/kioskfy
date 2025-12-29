@@ -58,7 +58,7 @@ export default function FavorisPage() {
                             </Button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                             {favorites.map((fav) => (
                                 <NewspaperCard key={fav.id} newspaper={fav.newspaper} />
                             ))}

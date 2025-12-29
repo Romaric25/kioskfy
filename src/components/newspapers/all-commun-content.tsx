@@ -8,6 +8,7 @@ import { NewspapersGridSkeleton, NewspaperCardSkeleton } from "@/components/news
 import { EmptyState, ErrorState } from "@/components/newspapers/newspapers-states";
 import { Loader2, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useMemo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -17,11 +18,18 @@ interface AllCommunContentProps {
     type?: "Journal" | "Magazine";
 }
 
+
+
 export function AllCommunContent({
     title = "Journaux publiés",
     showTitle = true,
     type = "Journal",
 }: AllCommunContentProps) {
+    const searchParams = useSearchParams();
+    const search = searchParams.get("q") || undefined;
+
+    console.log("AllCommunContent search:", search);
+
     const {
         data,
         fetchNextPage,
@@ -33,6 +41,7 @@ export function AllCommunContent({
     } = useInfinitePublishedNewspapers({
         type,
         limit: ITEMS_PER_PAGE,
+        search,
     });
 
     const loadMoreRef = useRef<HTMLDivElement>(null);

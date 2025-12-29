@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 import Image from "next/image";
 
 import { useNewspaper } from "@/hooks/use-newspapers.hook";
@@ -38,6 +39,7 @@ import { RelatedNewspapers } from "@/components/newspapers/related-newspapers";
 
 export const SingleNewspaper = () => {
     const { id } = useParams();
+    const pathname = usePathname();
     const { newspaper, newspaperLoading, newspaperError } = useNewspaper(id as string);
     const items = useCartStore((state) => state.items);
     const { addItem, removeItem } = useCartStore();
@@ -117,22 +119,29 @@ export const SingleNewspaper = () => {
         );
     }
 
+    const isMagazine = pathname?.includes("/magazines");
+    const sectionLabel = isMagazine ? "Magazines" : "Journaux";
+    const sectionHref = isMagazine ? "/magazines" : "/newspapers";
+
     return (
-        <div className="container mx-auto py-8 px-4 max-w-5xl">
+        <div className="container mx-auto py-8 px-4 ">
+            <SiteBreadcrumb
+                items={[
+                    { label: sectionLabel, href: sectionHref },
+                    { label: newspaper.issueNumber }
+                ]}
+            />
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Left Column: Cover Image */}
                 <div className="md:col-span-5 lg:col-span-4">
                     <Dialog>
-                        <DialogTrigger asChild>
+                        <DialogTrigger asChild className="p-0">
                             <Card className="overflow-hidden border-2 shadow-lg cursor-zoom-in transition-transform hover:scale-[1.02] hover:shadow-xl group">
-                                <div className="relative aspect-[3/4] w-full bg-muted">
-                                    <Image
+                                <div className="relative w-full">
+                                    <img
                                         src={newspaper.coverImage}
                                         alt={`Issue #${newspaper.issueNumber}`}
-                                        fill
-                                        className="object-cover transition-all group-hover:brightness-110"
-                                        priority
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 33vw"
+                                        className="w-full h-auto block transition-all group-hover:brightness-110"
                                     />
                                 </div>
                             </Card>
@@ -246,7 +255,7 @@ export const SingleNewspaper = () => {
                                     <InfoIcon className="h-4 w-4" />
                                     À propos de l'agence
                                 </h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed max-h-[10ch] overflow-y-auto">
+                                <p className="text-muted-foreground text-sm leading-relaxed max-h-[20ch] overflow-y-auto">
                                     {newspaper.organization.description}
                                 </p>
                             </div>
@@ -257,7 +266,7 @@ export const SingleNewspaper = () => {
 
                     <div className="bg-muted/30 p-6 rounded-lg border">
                         <div className="flex items-baseline justify-between mb-4">
-                            <span className="text-lg font-medium">Price</span>
+                            <span className="text-lg font-medium">Prix</span>
                             <span className="text-3xl font-bold text-primary">
                                 {priceFormatter(newspaper.price)}
                             </span>

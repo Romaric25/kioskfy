@@ -46,18 +46,19 @@ interface PaginatedPublishedResponse {
 
 // Hook for infinite scroll published newspapers/magazines
 export const useInfinitePublishedNewspapers = (
-    options: { type?: "Journal" | "Magazine"; limit?: number } = {}
+    options: { type?: "Journal" | "Magazine"; limit?: number; search?: string } = {}
 ) => {
-    const { type = "Journal", limit = 12 } = options;
+    const { type = "Journal", limit = 12, search } = options;
 
     return useInfiniteQuery({
-        queryKey: ['newspapers-published-infinite', type],
+        queryKey: ['newspapers-published-infinite', type, search],
         queryFn: async ({ pageParam = 0 }) => {
             const response = await client.api.v1.newspapers["published-paginated"].get({
                 query: {
                     cursor: pageParam.toString(),
                     limit: limit.toString(),
                     type,
+                    search,
                 },
             });
             return response.data as PaginatedPublishedResponse;

@@ -7,7 +7,7 @@ import {
     uploads,
 } from "@/db/app-schema";
 import { organizations } from "@/db/auth-schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, like, or } from "drizzle-orm";
 import {
     createNewspaperSchema,
     updateNewspaperSchema,
@@ -175,9 +175,9 @@ export class NewspapersController {
 
     // Get published newspapers with pagination (for infinite scroll)
     static async getPublishedNewspapersPaginated(
-        options: { limit?: number; cursor?: number; type?: "Journal" | "Magazine" } = {}
+        options: { limit?: number; cursor?: number; type?: "Journal" | "Magazine"; search?: string } = {}
     ) {
-        const { limit = 12, cursor = 0, type = "Journal" } = options;
+        const { limit = 12, cursor = 0, type = "Journal", search } = options;
 
         const publishedNewspapers = await db
             .select({
@@ -215,7 +215,11 @@ export class NewspapersController {
                 and(
                     eq(newspapers.status, Status.PUBLISHED),
                     sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
-                    sql`JSON_UNQUOTE(JSON_EXTRACT(${organizations.metadata}, '$.type')) = ${type}`
+                    sql`JSON_UNQUOTE(JSON_EXTRACT(${organizations.metadata}, '$.type')) = ${type}`,
+                    search ? or(
+                        like(organizations.name, `%${search}%`),
+                        like(newspapers.issueNumber, `%${search}%`)
+                    ) : undefined
                 )
             )
             .orderBy(desc(newspapers.publishDate))

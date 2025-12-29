@@ -42,7 +42,7 @@ export const authClient = createAuthClient({
                 editor,
             },
         }),
-        emailOTPClient(),
+
         adminClient({
             ac,
         }),

@@ -1,10 +1,69 @@
 import { CategoriesSection } from "@/components/categories-section";
 import { AllMagazinesPublished } from "@/components/newspapers/all-magazines-published";
+import { CountriesController } from "@/server/controllers/countries.controller";
+import { OrganizationsController } from "@/server/controllers/organizations.controller";
 import Link from "next/link";
+import { Metadata } from "next";
+import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 
+export async function generateMetadata(): Promise<Metadata> {
+    const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([
+        CountriesController.getAll(),
+        OrganizationsController.listAll(),
+    ]);
+
+    const countryNames = countries.map((c) => c.name).join(", ");
+    const orgNames = organizations.map((o) => o.name).join(", ");
+
+    const description = `Accédez à tous les magazines quotidiens et hebdomadaires d'Afrique sur kioskfy. Lisez la presse de nos pays partenaires : ${countryNames}. Retrouvez les publications de : ${orgNames} et bien plus en illimité.`;
+
+    return {
+        title: "Magazines | kioskfy - Votre kiosque numérique de presse africaine",
+        description,
+        keywords: [
+            "magazines",
+            "presse quotidienne",
+            "actualités",
+            "kiosque numérique",
+            "presse afrique",
+            ...countries.map((c) => `presse ${c.name.toLowerCase()}`),
+            ...countries.map((c) => `journaux ${c.name.toLowerCase()}`),
+            ...organizations.map((o) => o.name.toLowerCase()),
+            ...organizations.map((o) => `journaux ${o.name.toLowerCase()}`),
+        ],
+        alternates: {
+            canonical: "/magazines",
+        },
+        openGraph: {
+            title: "Magazines | kioskfy - Toute la presse africaine",
+            description,
+            url: "/magazines",
+            siteName: "kioskfy",
+            images: [
+                {
+                    url: "/og-image.jpg",
+                    width: 1200,
+                    height: 630,
+                    alt: "Journaux sur kioskfy",
+                },
+            ],
+            locale: "fr_FR",
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: "Magazines | kioskfy - Votre kiosque numérique",
+            description,
+            images: ["/og-image.jpg"],
+        },
+    };
+}
 export default function MagazinesPage() {
     return (
         <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+            <div className="container mx-auto px-4 pt-4">
+                <SiteBreadcrumb />
+            </div>
             {/* Hero Section */}
             <section className="relative overflow-hidden border-b border-border/40">
                 {/* Background Pattern */}

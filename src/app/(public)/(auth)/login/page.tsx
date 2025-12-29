@@ -1,4 +1,5 @@
 import { LoginForm } from "@/components/auth/login-form";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -16,7 +17,9 @@ export default function LoginPage() {
                 </Link>
 
                 <div className="mx-auto w-full max-w-md">
-                    <LoginForm />
+                    <Suspense fallback={<div>Chargement...</div>}>
+                        <LoginForm />
+                    </Suspense>
                 </div>
             </div>
 

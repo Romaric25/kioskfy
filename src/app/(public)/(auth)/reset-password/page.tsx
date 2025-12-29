@@ -1,4 +1,5 @@
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
@@ -22,7 +23,9 @@ export default function ResetPasswordPage() {
                 </Link>
 
                 <div className="mx-auto w-full max-w-md">
-                    <ResetPasswordForm />
+                    <Suspense fallback={<div>Chargement...</div>}>
+                        <ResetPasswordForm />
+                    </Suspense>
                 </div>
             </div>
 

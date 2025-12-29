@@ -1,4 +1,5 @@
 import { RegisterForm } from "@/components/auth/register-form";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -16,7 +17,9 @@ export default function RegisterPage() {
                 </Link>
 
                 <div className="mx-auto w-full max-w-md">
-                    <RegisterForm />
+                    <Suspense fallback={<div>Chargement...</div>}>
+                        <RegisterForm />
+                    </Suspense>
                 </div>
             </div>
 

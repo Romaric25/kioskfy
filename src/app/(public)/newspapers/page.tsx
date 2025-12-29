@@ -1,3 +1,4 @@
+
 import { AllNewspapersPublished } from "@/components/newspapers/all-newspapers-published";
 import Link from "next/link";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
@@ -7,6 +8,7 @@ import { Footer } from "@/components/footer";
 import { CountriesController } from "@/server/controllers/countries.controller";
 import { OrganizationsController } from "@/server/controllers/organizations.controller";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export async function generateMetadata(): Promise<Metadata> {
     const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([
@@ -85,7 +87,9 @@ export default function NewspapersPage() {
 
                 {/* Newspapers Grid Section */}
                 <section className="container mx-auto px-4 py-12 md:py-4">
-                    <AllNewspapersPublished />
+                    <Suspense fallback={<div>Chargement...</div>}>
+                        <AllNewspapersPublished />
+                    </Suspense>
                 </section>
 
                 {/* CTA Section */}

@@ -1,5 +1,6 @@
 import { CategoriesSection } from "@/components/categories-section";
 import { AllMagazinesPublished } from "@/components/newspapers/all-magazines-published";
+import { Suspense } from "react";
 import { CountriesController } from "@/server/controllers/countries.controller";
 import { OrganizationsController } from "@/server/controllers/organizations.controller";
 import Link from "next/link";
@@ -80,7 +81,9 @@ export default function MagazinesPage() {
 
             {/* Newspapers Grid Section */}
             <section className="container mx-auto px-4 py-12 md:py-4">
-                <AllMagazinesPublished />
+                <Suspense fallback={<div>Chargement...</div>}>
+                    <AllMagazinesPublished />
+                </Suspense>
             </section>
 
             {/* CTA Section */}

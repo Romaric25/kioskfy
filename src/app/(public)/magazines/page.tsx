@@ -6,6 +6,7 @@ import { OrganizationsController } from "@/server/controllers/organizations.cont
 import Link from "next/link";
 import { Metadata } from "next";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
+import { GridSkeleton } from "@/components/ui/loading";
 
 export async function generateMetadata(): Promise<Metadata> {
     const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([
@@ -81,7 +82,7 @@ export default function MagazinesPage() {
 
             {/* Newspapers Grid Section */}
             <section className="container mx-auto px-4 py-12 md:py-4">
-                <Suspense fallback={<div>Chargement...</div>}>
+                <Suspense fallback={<GridSkeleton count={12} />}>
                     <AllMagazinesPublished />
                 </Suspense>
             </section>

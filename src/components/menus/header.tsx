@@ -4,7 +4,6 @@ import { Activity, useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Search,
   ShoppingCart,
   User,
   Menu,
@@ -30,6 +29,7 @@ import { priceFormatter } from "@/lib/price-formatter";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +93,7 @@ export function Header() {
             {/* Actions area */}
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Search Desktop */}
-              <Suspense fallback={<div className="hidden lg:block w-full max-w-xs h-10" />}>
+              <Suspense fallback={<Skeleton className="hidden lg:block w-64 h-10 rounded-full" />}>
                 <SearchBar
                   className="hidden lg:block w-full max-w-xs"
                   inputClassName="w-64 focus-visible:w-72"
@@ -270,7 +270,7 @@ export function Header() {
 
           {/* Mobile Search Bar - Visible only on mobile below the main header row */}
           <div className="md:hidden pb-3 animate-in fade-in slide-in-from-top-2">
-            <Suspense fallback={null}>
+            <Suspense fallback={<Skeleton className="w-full h-10 rounded-full" />}>
               <SearchBar
                 inputClassName="w-full"
                 placeholder="Rechercher..."

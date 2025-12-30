@@ -549,6 +549,124 @@ export class NewspapersController {
         };
     }
 
+    // Get newspapers by category slug (with pagination)
+    static async getByCategory(
+        categorySlug: string,
+        options: { limit?: number; cursor?: number } = {}
+    ) {
+        const { limit = 12, cursor = 0 } = options;
+
+        // First, get the category by slug
+        const categoryResult = await db
+            .select({ id: categories.id, name: categories.name })
+            .from(categories)
+            .where(eq(categories.slug, categorySlug))
+            .limit(1);
+
+        if (categoryResult.length === 0) {
+            return {
+                success: false,
+                status: 404,
+                error: "Catégorie non trouvée",
+            };
+        }
+
+        const categoryId = categoryResult[0].id;
+        const categoryName = categoryResult[0].name;
+
+        // Get newspaper IDs that belong to this category
+        const newspaperIds = await db
+            .select({ newspaperId: newspapersCategories.newspapersId })
+            .from(newspapersCategories)
+            .where(eq(newspapersCategories.categoriesId, categoryId));
+
+        if (newspaperIds.length === 0) {
+            return {
+                success: true,
+                data: [],
+                category: { id: categoryId, name: categoryName, slug: categorySlug },
+                nextCursor: undefined,
+                total: 0,
+            };
+        }
+
+        const ids = newspaperIds.map((n) => n.newspaperId);
+
+        // Fetch newspapers with all relations
+        const categoryNewspapers = await db
+            .select({
+                id: newspapers.id,
+                coverImage: newspapers.coverImage,
+                price: newspapers.price,
+                publishDate: newspapers.publishDate,
+                issueNumber: newspapers.issueNumber,
+                status: newspapers.status,
+                createdAt: newspapers.createdAt,
+                organization: {
+                    id: organizations.id,
+                    name: organizations.name,
+                    slug: organizations.slug,
+                    logo: organizations.logo,
+                    metadata: organizations.metadata,
+                },
+                country: {
+                    id: countries.id,
+                    name: countries.name,
+                    slug: countries.slug,
+                    flag: countries.flag,
+                    code: countries.code,
+                    currency: countries.currency,
+                },
+            })
+            .from(newspapers)
+            .leftJoin(organizations, eq(newspapers.organizationId, organizations.id))
+            .leftJoin(countries, eq(newspapers.countryId, countries.id))
+            .where(
+                and(
+                    sql`${newspapers.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`,
+                    eq(newspapers.status, Status.PUBLISHED),
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`
+                )
+            )
+            .orderBy(desc(newspapers.publishDate))
+            .limit(limit + 1)
+            .offset(cursor);
+
+        // Check if there are more items
+        const hasMore = categoryNewspapers.length > limit;
+        const dataSlice = hasMore ? categoryNewspapers.slice(0, limit) : categoryNewspapers;
+
+        // Fetch categories for each newspaper
+        const newspapersWithCategories = await Promise.all(
+            dataSlice.map(async (newspaper) => {
+                const newspaperCategories = await db
+                    .select({
+                        id: categories.id,
+                        name: categories.name,
+                        slug: categories.slug,
+                        icon: categories.icon,
+                        color: categories.color,
+                    })
+                    .from(newspapersCategories)
+                    .innerJoin(categories, eq(newspapersCategories.categoriesId, categories.id))
+                    .where(eq(newspapersCategories.newspapersId, newspaper.id));
+
+                return {
+                    ...newspaper,
+                    categories: newspaperCategories,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            data: newspapersWithCategories,
+            category: { id: categoryId, name: categoryName, slug: categorySlug },
+            nextCursor: hasMore ? cursor + limit : undefined,
+            total: newspapersWithCategories.length,
+        };
+    }
+
     // Create a new newspaper
     static async create(body: unknown) {
         const validation = createNewspaperSchema.safeParse(body);

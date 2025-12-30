@@ -197,6 +197,36 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
+    // Get newspapers by category slug (with pagination)
+    .get(
+        "/category/:slug",
+        async ({ params: { slug }, query, set }) => {
+            const limit = query.limit ? parseInt(query.limit) : 12;
+            const cursor = query.cursor ? parseInt(query.cursor) : 0;
+            const result = await NewspapersController.getByCategory(slug, {
+                limit,
+                cursor,
+            });
+            if (!result.success && "status" in result) {
+                set.status = result.status;
+            }
+            return result;
+        },
+        {
+            params: t.Object({
+                slug: t.String({ minLength: 1 }),
+            }),
+            query: t.Object({
+                limit: t.Optional(t.String()),
+                cursor: t.Optional(t.String()),
+            }),
+            detail: {
+                tags: ["Public"],
+                summary: "Récupérer les journaux d'une catégorie (paginé)",
+                description: "Retourne les journaux publiés d'une catégorie avec pagination pour le défilement infini",
+            },
+        }
+    )
     // Create a new newspaper
     .post(
         "/",

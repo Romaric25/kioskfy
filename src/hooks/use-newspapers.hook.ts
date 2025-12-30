@@ -147,6 +147,39 @@ export const useNewspapersByCountry = (countryId: number) => {
     return { newspapers, newspapersLoading, newspapersError }
 }
 
+// Response type for paginated category newspapers
+interface PaginatedCategoryResponse {
+    success: boolean;
+    data: NewspaperResponse[];
+    category?: { id: number; name: string; slug: string };
+    nextCursor?: number;
+    total: number;
+}
+
+// Hook for infinite scroll newspapers by category
+export const useInfiniteNewspapersByCategory = (
+    categorySlug: string,
+    options: { limit?: number } = {}
+) => {
+    const { limit = 12 } = options;
+
+    return useInfiniteQuery({
+        queryKey: ['newspapers-category-infinite', categorySlug],
+        queryFn: async ({ pageParam = 0 }) => {
+            const response = await client.api.v1.newspapers.category({ slug: categorySlug }).get({
+                query: {
+                    cursor: pageParam.toString(),
+                    limit: limit.toString(),
+                },
+            });
+            return response.data as PaginatedCategoryResponse;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
+        enabled: !!categorySlug,
+    });
+}
+
 // Hook for updating a newspaper
 export const useUpdateNewspaper = () => {
     const queryClient = useQueryClient();

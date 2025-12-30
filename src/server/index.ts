@@ -12,6 +12,7 @@ import { organizationsService } from './services/organizations.service';
 import { usersService } from './services/users.service';
 import { favoritesService } from './services/favorites.service';
 import { favoriteCountriesService } from './services/favorite-countries.service';
+import { monerooWebhookService } from './services/moneroo-webhook.service';
 import { serverTiming } from '@elysiajs/server-timing'
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -47,7 +48,8 @@ const app = new Elysia({ prefix: '/api/v1' })
                     { name: 'Public', description: 'Endpoints publics' },
                     { name: 'Payment', description: 'Endpoints de paiement' },
                     { name: 'Organizations', description: 'Endpoints des organisations' },
-                    { name: 'Protected', description: 'Endpoints protégés (authentification requise)' }
+                    { name: 'Protected', description: 'Endpoints protégés (authentification requise)' },
+                    { name: 'Webhooks', description: 'Endpoints webhook pour intégrations externes' }
                 ],
                 paths: await OpenAPI.getPaths(),
                 components: await OpenAPI.components,
@@ -64,6 +66,7 @@ const app = new Elysia({ prefix: '/api/v1' })
     .use(usersService)
     .use(favoritesService)
     .use(favoriteCountriesService)
+    .use(monerooWebhookService)
     // Block /docs access in production
     .onBeforeHandle(({ request, set }) => {
         if (isProduction && request.url.includes('/api/v1/docs')) {

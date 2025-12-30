@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
             siteName: "kioskfy",
             images: [
                 {
-                    url: "/og-image.jpg",
+                    url: "/og-image.png",
                     width: 1200,
                     height: 630,
                     alt: "Journaux sur kioskfy",
@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
             card: "summary_large_image",
             title: "Magazines | kioskfy - Votre kiosque numérique",
             description,
-            images: ["/og-image.jpg"],
+            images: ["/og-image.png"],
         },
     };
 }

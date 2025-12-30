@@ -40,7 +40,7 @@ export function SearchBar({ className, inputClassName, placeholder = "Rechercher
     if (!shouldShow) return null;
 
     return (
-        <div className={cn("relative group", className)}>
+        <div className={cn("relative group mt-4", className)}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
             <Input
                 type="search"

@@ -16,7 +16,12 @@ export const useCartStore = create<CartState>()(
         (set, get) => ({
             items: [],
             addItem: (item) => {
-                set({ items: [item] });
+                const { items } = get();
+                // Ne pas ajouter si l'article existe déjà
+                if (items.some((i) => i.id === item.id)) {
+                    return;
+                }
+                set({ items: [...items, item] });
             },
             removeItem: (id) => {
                 const { items } = get();

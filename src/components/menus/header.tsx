@@ -1,14 +1,12 @@
 "use client";
 
-import { Activity, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ShoppingCart,
   User,
   Menu,
   Handshake,
-  Trash2,
   Newspaper,
   BookOpen,
   LogOut,
@@ -16,18 +14,13 @@ import {
   Sparkles
 } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
+import { CartPopover } from "@/components/cart-popover";
 import { Logo } from "../ui/logo";
-import { useCartStore } from "@/stores/cart.store";
 import { useAuth } from "@/hooks/use-auth.hook";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent, SheetTitle } from "../ui/sheet";
-import Image from "next/image";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "../ui/theme-toggle";
-import { priceFormatter } from "@/lib/price-formatter";
-import { Input } from "../ui/input";
-import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -39,13 +32,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Utility component for conditional rendering
+function Activity({ mode, children }: { mode: "visible" | "hidden"; children: React.ReactNode }) {
+  if (mode === "hidden") return null;
+  return <>{children}</>;
+}
+
 export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const isAgency = user?.typeUser === "agency";
-  const { items, removeItem, total } = useCartStore();
-  const cartCount = items.length;
 
   return (
     <>
@@ -117,84 +114,7 @@ export function Header() {
 
               <div className="flex items-center gap-1 border-l pl-2 ml-2 border-border/50">
                 {/* Cart */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative rounded-full h-10 w-10 hover:bg-muted/50">
-                      <ShoppingCart className="h-5 w-5" />
-                      {cartCount > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-primary text-[10px] border-2 border-background animate-in zoom-in">
-                          {cartCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0 shadow-xl border-border/60" align="end">
-                    <div className="p-4 font-semibold border-b bg-muted/20 flex justify-between items-center">
-                      <span>Panier</span>
-                      <Badge variant="secondary" className="rounded-full">{cartCount} items</Badge>
-                    </div>
-                    <ScrollArea className="h-full max-h-[300px]">
-                      {items.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
-                          <div className="bg-muted p-4 rounded-full">
-                            <ShoppingCart className="h-8 w-8 opacity-40" />
-                          </div>
-                          <p className="text-sm">Votre panier est vide</p>
-                        </div>
-                      ) : (
-                        <div className="p-4 space-y-4">
-                          {items.map((item) => (
-                            <div key={item.id} className="flex gap-4 group">
-                              <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md border shadow-sm group-hover:scale-105 transition-transform">
-                                <Image
-                                  src={item.coverImage!}
-                                  alt={item.issueNumber}
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="flex flex-1 flex-col justify-between py-0.5">
-                                <div>
-                                  <h3 className="line-clamp-1 text-sm font-semibold">{item.issueNumber}</h3>
-                                  <p className="text-xs text-muted-foreground line-clamp-1">
-                                    {item.organization?.name}
-                                  </p>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-bold text-primary">
-                                    {priceFormatter(item.price, item.country?.currency, "fr")}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeItem(item.id)}
-                                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                    {items.length > 0 && (
-                      <div className="p-4 border-t bg-muted/20 space-y-3">
-                        <div className="flex justify-between font-semibold">
-                          <span>Total</span>
-                          <span className="text-lg">
-                            {priceFormatter(total(), items[0]?.country?.currency, "fr")}
-                          </span>
-                        </div>
-                        <Button className="w-full rounded-full shadow-lg shadow-primary/20" asChild>
-                          <Link href="/cart">
-                            Procéder au paiement
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
+                <CartPopover />
 
                 {/* Auth */}
 
@@ -229,7 +149,7 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard" className="cursor-pointer font-medium">
                           <User className="mr-2 h-4 w-4" />
-                          <span>Profil</span>
+                          <span>Mon compte</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

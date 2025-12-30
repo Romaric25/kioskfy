@@ -173,8 +173,8 @@ export class MonerooWebhookController {
         console.log("[Moneroo Webhook] Payment success:", data.id);
 
         try {
-            // Find the order with newspaper details
-            const order = await db.query.orders.findFirst({
+            // Find ALL orders with this payment ID (multiple orders possible)
+            const foundOrders = await db.query.orders.findMany({
                 where: eq(orders.paymentId, data.id),
                 with: {
                     newspaper: {
@@ -186,27 +186,35 @@ export class MonerooWebhookController {
                 },
             });
 
-            if (!order) {
-                console.warn(`[Moneroo Webhook] Order not found for payment: ${data.id}`);
+            if (!foundOrders || foundOrders.length === 0) {
+                console.warn(`[Moneroo Webhook] No orders found for payment: ${data.id}`);
                 return {
                     success: false,
-                    message: `Order not found for payment ${data.id}`,
+                    message: `No orders found for payment ${data.id}`,
                 };
             }
 
-            // Update order status to completed
+            console.log(`[Moneroo Webhook] Found ${foundOrders.length} order(s) for payment ${data.id}`);
+
+            // Update ALL orders status to completed
+            const orderIds = foundOrders.map((order) => order.id);
             await db
                 .update(orders)
                 .set({
                     status: "completed",
                     updatedAt: new Date(),
                 })
-                .where(eq(orders.id, order.id));
+                .where(eq(orders.paymentId, data.id));
 
-            console.log(`[Moneroo Webhook] Order ${order.id} marked as completed`);
+            console.log(`[Moneroo Webhook] ${orderIds.length} order(s) marked as completed:`, orderIds);
 
-            // Create revenue share record
-            if (order.newspaper?.organizationId) {
+            // Create revenue share records for each order
+            const revenueSharePromises = foundOrders.map(async (order) => {
+                if (!order.newspaper?.organizationId) {
+                    console.warn(`[Moneroo Webhook] No organization found for order ${order.id}, skipping revenue share`);
+                    return null;
+                }
+
                 const totalAmount = parseFloat(order.price);
                 const platformAmount = (totalAmount * PLATFORM_PERCENTAGE) / 100;
                 const organizationAmount = (totalAmount * ORGANIZATION_PERCENTAGE) / 100;
@@ -226,23 +234,30 @@ export class MonerooWebhookController {
                 });
 
                 console.log(`[Moneroo Webhook] Revenue share created for order ${order.id}:`, {
+                    organizationId: order.newspaper.organizationId,
+                    organizationName: order.newspaper.organization?.name,
                     total: totalAmount,
                     platform: platformAmount,
                     organization: organizationAmount,
                     currency,
                 });
-            } else {
-                console.warn(`[Moneroo Webhook] No organization found for order ${order.id}, skipping revenue share`);
-            }
+
+                return order.id;
+            });
+
+            const processedOrders = await Promise.all(revenueSharePromises);
+            const successfulShares = processedOrders.filter((id) => id !== null);
+
+            console.log(`[Moneroo Webhook] Revenue shares created: ${successfulShares.length}/${foundOrders.length}`);
 
             // TODO: Add any post-payment success logic here
             // - Send confirmation email
-            // - Grant access to newspaper
+            // - Grant access to newspapers
 
             return {
                 success: true,
-                message: "Payment success processed",
-                orderId: order.id,
+                message: `Payment success processed for ${foundOrders.length} order(s)`,
+                orderId: orderIds.join(","),
             };
         } catch (error) {
             console.error("[Moneroo Webhook] Error handling payment.success:", error);
@@ -262,28 +277,30 @@ export class MonerooWebhookController {
         console.log("[Moneroo Webhook] Payment failed:", data.id);
 
         try {
-            const order = await db.query.orders.findFirst({
+            // Find all orders with this payment ID
+            const foundOrders = await db.query.orders.findMany({
                 where: eq(orders.paymentId, data.id),
             });
 
-            if (!order) {
-                console.warn(`[Moneroo Webhook] Order not found for payment: ${data.id}`);
+            if (!foundOrders || foundOrders.length === 0) {
+                console.warn(`[Moneroo Webhook] No orders found for payment: ${data.id}`);
                 return {
                     success: false,
-                    message: `Order not found for payment ${data.id}`,
+                    message: `No orders found for payment ${data.id}`,
                 };
             }
 
-            // Update order status to failed
+            // Update all orders status to failed
             await db
                 .update(orders)
                 .set({
                     status: "failed",
                     updatedAt: new Date(),
                 })
-                .where(eq(orders.id, order.id));
+                .where(eq(orders.paymentId, data.id));
 
-            console.log(`[Moneroo Webhook] Order ${order.id} marked as failed`);
+            const orderIds = foundOrders.map((order) => order.id);
+            console.log(`[Moneroo Webhook] ${orderIds.length} order(s) marked as failed:`, orderIds);
 
             // TODO: Add failure handling logic
             // - Send failure notification email
@@ -291,8 +308,8 @@ export class MonerooWebhookController {
 
             return {
                 success: true,
-                message: "Payment failure processed",
-                orderId: order.id,
+                message: `Payment failure processed for ${foundOrders.length} order(s)`,
+                orderId: orderIds.join(","),
             };
         } catch (error) {
             console.error("[Moneroo Webhook] Error handling payment.failed:", error);
@@ -312,33 +329,35 @@ export class MonerooWebhookController {
         console.log("[Moneroo Webhook] Payment cancelled:", data.id);
 
         try {
-            const order = await db.query.orders.findFirst({
+            // Find all orders with this payment ID
+            const foundOrders = await db.query.orders.findMany({
                 where: eq(orders.paymentId, data.id),
             });
 
-            if (!order) {
-                console.warn(`[Moneroo Webhook] Order not found for payment: ${data.id}`);
+            if (!foundOrders || foundOrders.length === 0) {
+                console.warn(`[Moneroo Webhook] No orders found for payment: ${data.id}`);
                 return {
                     success: false,
-                    message: `Order not found for payment ${data.id}`,
+                    message: `No orders found for payment ${data.id}`,
                 };
             }
 
-            // Update order status to failed (cancelled)
+            // Update all orders status to failed (cancelled)
             await db
                 .update(orders)
                 .set({
                     status: "failed",
                     updatedAt: new Date(),
                 })
-                .where(eq(orders.id, order.id));
+                .where(eq(orders.paymentId, data.id));
 
-            console.log(`[Moneroo Webhook] Order ${order.id} marked as cancelled`);
+            const orderIds = foundOrders.map((order) => order.id);
+            console.log(`[Moneroo Webhook] ${orderIds.length} order(s) marked as cancelled:`, orderIds);
 
             return {
                 success: true,
-                message: "Payment cancellation processed",
-                orderId: order.id,
+                message: `Payment cancellation processed for ${foundOrders.length} order(s)`,
+                orderId: orderIds.join(","),
             };
         } catch (error) {
             console.error("[Moneroo Webhook] Error handling payment.cancelled:", error);

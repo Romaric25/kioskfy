@@ -16,33 +16,19 @@ import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { FrequencyContent } from "@/components/frequency-content";
 import { useAuth } from "@/hooks/use-auth.hook";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/stores/cart.store";
 import type { Payment } from "@/server/models/payment.model";
 import { useInitializePayment } from "@/hooks/use-payment.hook";
+import { useCreateOrderBatch, useUpdatePaymentId } from "@/hooks/use-orders.hook";
+import toast from "react-hot-toast";
 
 export function Cart() {
-    const { items, removeItem, total } = useCartStore();
-    const { user } = useAuth();
+    const { items, removeItem, total, clearCart } = useCartStore();
+    const { user, isAuthenticated } = useAuth();
     const router = useRouter();
-
-    const data: Payment = {
-        amount: total(),
-        currency: "USD",
-        description: "Payment for order #123",
-        customer: {
-            email: user?.email || "",
-            first_name: user?.name || "",
-            last_name: user?.lastName || "",
-        },
-        return_url: "https://example.com/payments/thank-you",
-        metadata: {
-            order_id: "123",
-            customer_id: user?.id,
-        },
-        methods: [],
-    };
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const {
         mutateAsync: payment,
@@ -52,27 +38,86 @@ export function Cart() {
         isSuccess,
     } = useInitializePayment();
 
-    const handleInitializePayment = async () => {
-        try {
-            await payment(data);
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    const { mutateAsync: createOrders } = useCreateOrderBatch();
+    const { mutateAsync: updatePaymentId } = useUpdatePaymentId();
 
-    useEffect(() => {
-        if (isSuccess && paymentData) {
-            console.log("Payment API Response:", paymentData);
-            const response = paymentData as any;
+    const handleInitializePayment = async () => {
+        if (!isAuthenticated || !user) {
+            toast.error("Veuillez vous connecter pour continuer");
+            router.push("/login?redirect=/cart");
+            return;
+        }
+
+        if (items.length === 0) {
+            toast.error("Votre panier est vide");
+            return;
+        }
+
+        setIsProcessing(true);
+
+        try {
+            // Step 1: Create orders in database
+            const ordersToCreate = items.map((item) => ({
+                newspaperId: item.id,
+                price: parseFloat(item.price.toString()),
+            }));
+
+            const ordersResult = await createOrders(ordersToCreate);
+
+            if (!ordersResult.success || !ordersResult.data) {
+                throw new Error(ordersResult.message || "Erreur lors de la création des commandes");
+            }
+
+            const orderIds = ordersResult.data.map((order) => order.id);
+            console.log("[Cart] Orders created:", orderIds);
+
+            // Step 2: Initialize payment with Moneroo
+            const paymentData: Payment = {
+                amount: total(),
+                currency: "USD",
+                //currency: items[0]?.country?.currency || "XAF",
+                description: `Achat de ${items.length} journal(aux) sur Kioskfy`,
+                customer: {
+                    email: user.email || "client@kioskfy.com",
+                    first_name: user.name || "Client",
+                    last_name: user.lastName || user.name || "Kioskfy",
+                },
+                return_url: `${window.location.origin}/payment/success`,
+                metadata: {
+                    order_ids: JSON.stringify(orderIds),
+                    customer_id: user.id,
+                    items_count: items.length,
+                },
+                methods: [],
+            };
+
+            const paymentResult = await payment(paymentData);
+            const response = paymentResult as any;
+            const paymentId = response?.data?.id || response?.id;
             const checkoutUrl = response?.data?.checkout_url || response?.checkout_url;
 
+            if (!paymentId) {
+                throw new Error("Erreur: ID de paiement non reçu");
+            }
+
+            console.log("[Cart] Payment initialized:", paymentId);
+
+            // Step 3: Update orders with payment ID
+            await updatePaymentId({ orderIds, paymentId });
+            console.log("[Cart] Orders updated with payment ID");
+
+            // Step 4: Redirect to payment page
             if (checkoutUrl) {
                 window.location.href = checkoutUrl;
             } else {
-                console.error("Could not find checkout_url in response", paymentData);
+                throw new Error("URL de paiement non disponible");
             }
+        } catch (error: any) {
+            console.error("[Cart] Error:", error);
+            toast.error(error.message || "Une erreur est survenue");
+            setIsProcessing(false);
         }
-    }, [isSuccess, paymentData]);
+    };
 
     if (items.length === 0) {
         return (
@@ -199,12 +244,12 @@ export function Cart() {
                                 onClick={handleInitializePayment}
                                 className="w-full"
                                 size="lg"
-                                disabled={initializePaymentLoading}
+                                disabled={isProcessing}
                             >
-                                {initializePaymentLoading ? (
+                                {isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Traitement...
+                                        Traitement en cours...
                                     </>
                                 ) : (
                                     <>

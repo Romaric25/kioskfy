@@ -17,13 +17,18 @@ import {
     Dialog,
     DialogContent,
     DialogTrigger,
-    DialogTitle
+    DialogTitle,
+    DialogDescription,
+    DialogHeader,
+    DialogFooter
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange, Share2, Heart } from "lucide-react";
+import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange, Share2, Heart, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
 import { formatDate } from "@/lib/helpers";
 import { useLocale } from "next-intl";
 import { useCartStore } from "@/stores/cart.store";
@@ -43,6 +48,7 @@ export const SingleNewspaper = () => {
     const { newspaper, newspaperLoading, newspaperError } = useNewspaper(id as string);
     const items = useCartStore((state) => state.items);
     const { addItem, removeItem } = useCartStore();
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const inCart = newspaper ? items.some((item) => item.id === newspaper.id) : false;
 
@@ -56,6 +62,7 @@ export const SingleNewspaper = () => {
             removeItem(newspaper.id);
         } else {
             addItem(newspaper);
+            setShowSuccessModal(true);
         }
     };
 
@@ -301,6 +308,61 @@ export const SingleNewspaper = () => {
                     currentNewspaperId={newspaper.id}
                 />
             )}
+
+            {/* Success Modal */}
+            <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="text-center sm:text-center">
+                        <div className="mx-auto mb-4 relative">
+                            <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
+                            <div className="relative bg-gradient-to-br from-green-400 to-green-600 rounded-full p-4 shadow-lg shadow-green-500/30">
+                                <CheckCircle2 className="h-10 w-10 text-white" strokeWidth={2.5} />
+                            </div>
+                        </div>
+                        <DialogTitle className="text-xl font-bold text-center">
+                            Ajouté au panier !
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-muted-foreground">
+                            L'article a bien été ajouté à votre panier.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg border">
+                        <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md border shadow-sm">
+                            <img
+                                src={newspaper.coverImage}
+                                alt={newspaper.issueNumber}
+                                className="object-cover w-full h-full"
+                            />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold truncate">{newspaper.issueNumber}</h4>
+                            <p className="text-sm text-muted-foreground truncate">
+                                {newspaper.organization?.name}
+                            </p>
+                            <p className="text-sm font-bold text-primary mt-1">
+                                {priceFormatter(newspaper.price)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
+                        <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setShowSuccessModal(false)}
+                        >
+                            Continuer vos achats
+                        </Button>
+                        <Button asChild className="flex-1">
+                            <Link href="/cart">
+                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                Voir le panier
+                            </Link>
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

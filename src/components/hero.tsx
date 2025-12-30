@@ -57,11 +57,11 @@ export function Hero() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="h-12 px-8 text-base rounded-full gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all">
-                Découvrir les journaux <ArrowRight className="h-4 w-4" />
+              <Button asChild size="lg" className="h-12 px-8 text-base rounded-full gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all">
+                <Link href="/newspapers">Découvrir les journaux <ArrowRight className="h-4 w-4" /></Link>
               </Button>
-              <Button variant="outline" size="lg" className="h-12 px-8 text-base rounded-full border-2 hover:bg-muted/50">
-                S'abonner
+              <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base rounded-full border-2 border-amber-500/50 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 text-amber-600 dark:text-amber-400 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:border-amber-500 hover:bg-gradient-to-r hover:from-amber-500 hover:via-orange-500 hover:to-amber-600 hover:text-white hover:scale-105 transition-all duration-300">
+                <Link href="/partnership">Devenir partenaire <ArrowRight className="h-4 w-4" /></Link>
               </Button>
             </div>
 

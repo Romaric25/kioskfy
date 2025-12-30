@@ -89,7 +89,7 @@ export function PaymentSuccessContent() {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
                             <Button asChild variant="outline" className="flex-1 rounded-full">
-                                <Link href="/dashboard/purchases">
+                                <Link href="/dashboard/achats">
                                     <Newspaper className="mr-2 h-4 w-4" />
                                     Mes achats
                                 </Link>

@@ -137,7 +137,7 @@ export const newspapersCategories = mysqlTable(
 // ============================================
 // Orders Table
 // ============================================
-export const orderStatusEnum = mysqlEnum("order_status", [
+export const orderStatusEnum = mysqlEnum("status", [
     "pending",
     "completed",
     "failed",
@@ -164,6 +164,60 @@ export const orders = mysqlTable(
     (table) => [
         index("orders_userId_idx").on(table.userId),
         index("orders_newspaperId_idx").on(table.newspaperId),
+    ]
+);
+
+// ============================================
+// Revenue Shares Table
+// Gère la répartition des revenus entre plateforme et organisations
+// Plateforme: 25% | Organisation: 75%
+// ============================================
+export const revenueShareStatusEnum = mysqlEnum("revenue_share_status", [
+    "pending",      // En attente de traitement
+    "processed",    // Traité et comptabilisé
+    "paid_out",     // Versé à l'organisation
+    "cancelled",    // Annulé (remboursement)
+]);
+
+export const revenueShares = mysqlTable(
+    "revenue_shares",
+    {
+        id: int("id").primaryKey().autoincrement(),
+        orderId: varchar("orderId", { length: 36 })
+            .notNull()
+            .references(() => orders.id, { onDelete: "cascade" }),
+        organizationId: varchar("organizationId", { length: 36 })
+            .notNull()
+            .references(() => organizations.id),
+
+        // Montants
+        totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
+        platformAmount: decimal("platformAmount", { precision: 10, scale: 2 }).notNull(),
+        organizationAmount: decimal("organizationAmount", { precision: 10, scale: 2 }).notNull(),
+
+        // Pourcentages (stockés pour historique en cas de changement de taux)
+        platformPercentage: decimal("platformPercentage", { precision: 5, scale: 2 }).default("25.00").notNull(),
+        organizationPercentage: decimal("organizationPercentage", { precision: 5, scale: 2 }).default("75.00").notNull(),
+
+        // Devise
+        currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+
+        // Statut
+        status: revenueShareStatusEnum.default("pending").notNull(),
+
+        // Dates
+        processedAt: timestamp("processedAt"),
+        paidOutAt: timestamp("paidOutAt"),
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+        updatedAt: timestamp("updatedAt")
+            .defaultNow()
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("revenue_shares_orderId_idx").on(table.orderId),
+        index("revenue_shares_organizationId_idx").on(table.organizationId),
+        index("revenue_shares_status_idx").on(table.status),
     ]
 );
 
@@ -229,7 +283,7 @@ export const newspapersCategoriesRelations = relations(
 );
 
 // Orders relations
-export const ordersRelations = relations(orders, ({ one }) => ({
+export const ordersRelations = relations(orders, ({ one, many }) => ({
     user: one(users, {
         fields: [orders.userId],
         references: [users.id],
@@ -237,6 +291,22 @@ export const ordersRelations = relations(orders, ({ one }) => ({
     newspaper: one(newspapers, {
         fields: [orders.newspaperId],
         references: [newspapers.id],
+    }),
+    revenueShare: one(revenueShares, {
+        fields: [orders.id],
+        references: [revenueShares.orderId],
+    }),
+}));
+
+// Revenue Shares relations
+export const revenueSharesRelations = relations(revenueShares, ({ one }) => ({
+    order: one(orders, {
+        fields: [revenueShares.orderId],
+        references: [orders.id],
+    }),
+    organization: one(organizations, {
+        fields: [revenueShares.organizationId],
+        references: [organizations.id],
     }),
 }));
 

@@ -1,7 +1,13 @@
 import { createHmac } from "crypto";
 import { db } from "@/lib/db";
-import { orders } from "@/db/app-schema";
+import { orders, revenueShares, newspapers } from "@/db/app-schema";
 import { eq } from "drizzle-orm";
+
+// ============================================
+// Constants
+// ============================================
+const PLATFORM_PERCENTAGE = 25;
+const ORGANIZATION_PERCENTAGE = 75;
 
 // ============================================
 // Moneroo Webhook Types
@@ -167,9 +173,17 @@ export class MonerooWebhookController {
         console.log("[Moneroo Webhook] Payment success:", data.id);
 
         try {
-            // Find and update the order
+            // Find the order with newspaper details
             const order = await db.query.orders.findFirst({
                 where: eq(orders.paymentId, data.id),
+                with: {
+                    newspaper: {
+                        with: {
+                            organization: true,
+                            country: true,
+                        },
+                    },
+                },
             });
 
             if (!order) {
@@ -191,10 +205,39 @@ export class MonerooWebhookController {
 
             console.log(`[Moneroo Webhook] Order ${order.id} marked as completed`);
 
+            // Create revenue share record
+            if (order.newspaper?.organizationId) {
+                const totalAmount = parseFloat(order.price);
+                const platformAmount = (totalAmount * PLATFORM_PERCENTAGE) / 100;
+                const organizationAmount = (totalAmount * ORGANIZATION_PERCENTAGE) / 100;
+                const currency = order.newspaper?.country?.currency || "XAF";
+
+                await db.insert(revenueShares).values({
+                    orderId: order.id,
+                    organizationId: order.newspaper.organizationId,
+                    totalAmount: totalAmount.toFixed(2),
+                    platformAmount: platformAmount.toFixed(2),
+                    organizationAmount: organizationAmount.toFixed(2),
+                    platformPercentage: PLATFORM_PERCENTAGE.toFixed(2),
+                    organizationPercentage: ORGANIZATION_PERCENTAGE.toFixed(2),
+                    currency,
+                    status: "processed",
+                    processedAt: new Date(),
+                });
+
+                console.log(`[Moneroo Webhook] Revenue share created for order ${order.id}:`, {
+                    total: totalAmount,
+                    platform: platformAmount,
+                    organization: organizationAmount,
+                    currency,
+                });
+            } else {
+                console.warn(`[Moneroo Webhook] No organization found for order ${order.id}, skipping revenue share`);
+            }
+
             // TODO: Add any post-payment success logic here
             // - Send confirmation email
             // - Grant access to newspaper
-            // - Update user's purchased items
 
             return {
                 success: true,

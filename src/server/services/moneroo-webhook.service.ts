@@ -8,36 +8,39 @@ import {
 // Webhook Payload Schema
 // ============================================
 
-const webhookDataSchema = t.Object({
-    id: t.String(),
-    status: t.String(),
-    amount: t.Optional(t.Number()),
-    currency: t.Optional(t.String()),
-    customer: t.Optional(
-        t.Object({
-            email: t.Optional(t.String()),
-            first_name: t.Optional(t.String()),
-            last_name: t.Optional(t.String()),
-            phone: t.Optional(t.String()),
-        })
-    ),
-    metadata: t.Optional(t.Record(t.String(), t.Any())),
-    created_at: t.Optional(t.String()),
-    updated_at: t.Optional(t.String()),
-});
+// More permissive schema to accept all fields from Moneroo
+// The actual validation is done in the controller
+const webhookDataSchema = t.Object(
+    {
+        id: t.String(),
+        status: t.String(),
+        amount: t.Optional(t.Union([t.Number(), t.String()])),
+        currency: t.Optional(t.String()),
+        customer: t.Optional(
+            t.Object(
+                {
+                    email: t.Optional(t.String()),
+                    first_name: t.Optional(t.String()),
+                    last_name: t.Optional(t.String()),
+                    phone: t.Optional(t.String()),
+                },
+                { additionalProperties: true }
+            )
+        ),
+        metadata: t.Optional(t.Any()),
+        created_at: t.Optional(t.String()),
+        updated_at: t.Optional(t.String()),
+    },
+    { additionalProperties: true } // Allow additional fields from Moneroo
+);
 
-const webhookPayloadSchema = t.Object({
-    event: t.Union([
-        t.Literal("payment.initiated"),
-        t.Literal("payment.success"),
-        t.Literal("payment.failed"),
-        t.Literal("payment.cancelled"),
-        t.Literal("payout.initiated"),
-        t.Literal("payout.success"),
-        t.Literal("payout.failed"),
-    ]),
-    data: webhookDataSchema,
-});
+const webhookPayloadSchema = t.Object(
+    {
+        event: t.String(), // Accept any event string, handle unknown events gracefully
+        data: webhookDataSchema,
+    },
+    { additionalProperties: true } // Allow additional top-level fields
+);
 
 // ============================================
 // Moneroo Webhook Service
@@ -51,6 +54,9 @@ export const monerooWebhookService = new Elysia({ prefix: "/webhooks" })
     .post(
         "/moneroo",
         async ({ body, request, set }) => {
+            // Log the incoming webhook payload for debugging
+            console.log("[Moneroo Webhook] Incoming payload:", JSON.stringify(body, null, 2));
+
             const signature = request.headers.get("x-moneroo-signature");
             const webhookSecret = process.env.MONEROO_WEBHOOK_SECRET;
 

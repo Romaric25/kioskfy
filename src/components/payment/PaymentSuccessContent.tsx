@@ -10,11 +10,13 @@ import { usePaymentStore } from "@/stores/use-payment.store";
 import { useVerifyPayment } from "@/hooks";
 import { updateUserPhone } from "@/server/actions/user.actions";
 import { handlePaymentSuccess } from "@/server/actions/payment.actions";
+import { redirect } from "next/navigation";
 
 export function PaymentSuccessContent() {
     const { clearCart } = useCartStore();
     const { paymentId, clearPaymentId } = usePaymentStore();
     const { paymentVerify } = useVerifyPayment(paymentId);
+    if (!paymentVerify) redirect("/");
     const hasProcessedPayment = useRef(false);
 
     // Handle user phone update via server action
@@ -50,7 +52,7 @@ export function PaymentSuccessContent() {
 
     // Clear cart and payment ID after successful payment
     useEffect(() => {
-        if ((paymentVerify?.data?.status === "success") && paymentVerify.data.is_processed && !hasProcessedPayment.current) {
+        if ((paymentVerify?.data?.status === "success") && !hasProcessedPayment.current) {
             hasProcessedPayment.current = true;
             handleUpdateUserPhone();
             processPaymentSuccess();
@@ -92,16 +94,6 @@ export function PaymentSuccessContent() {
                     </CardHeader>
 
                     <CardContent className="space-y-6 pt-4">
-                        {/* Order Info */}
-                        <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                <span>Référence de paiement</span>
-                            </div>
-                            <p className="font-mono text-sm bg-background rounded-lg px-3 py-2 border">
-                                {paymentId || "N/A"}
-                            </p>
-                        </div>
-
                         {/* What's Next */}
                         <div className="space-y-4 text-left bg-primary/5 rounded-xl p-4">
                             <h3 className="font-semibold text-center">Que se passe-t-il maintenant ?</h3>

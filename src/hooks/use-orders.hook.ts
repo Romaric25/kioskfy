@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
     OrderInput,
     OrderResponse,
+    OrderWithNewspaperResponse,
     CreateOrderResponse,
     CreateOrderBatchResponse,
     MyOrdersResponse,

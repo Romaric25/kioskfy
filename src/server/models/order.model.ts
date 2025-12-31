@@ -55,6 +55,23 @@ export interface OrderResponse {
     updatedAt: string;
 }
 
+export interface OrderWithNewspaperResponse extends Omit<OrderResponse, 'createdAt' | 'updatedAt'> {
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    newspaper: {
+        id: string;
+        issueNumber: string;
+        coverImage: string;
+        price: string;
+        publishDate: Date | string;
+        organization: {
+            id: string;
+            name: string;
+            logo: string | null;
+        } | null;
+    } | null;
+}
+
 export interface CreateOrderResponse {
     success: boolean;
     data?: OrderResponse;
@@ -74,7 +91,7 @@ export interface UpdatePaymentIdResponse {
 
 export interface MyOrdersResponse {
     success: boolean;
-    data: OrderResponse[];
+    data: OrderWithNewspaperResponse[];
 }
 
 export interface CheckPurchaseResponse {

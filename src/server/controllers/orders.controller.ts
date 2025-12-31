@@ -24,6 +24,21 @@ export interface OrderResponse {
     updatedAt: Date;
 }
 
+export interface OrderWithNewspaperResponse extends OrderResponse {
+    newspaper: {
+        id: string;
+        issueNumber: string;
+        coverImage: string;
+        price: string;
+        publishDate: Date;
+        organization: {
+            id: string;
+            name: string;
+            logo: string | null;
+        } | null;
+    } | null;
+}
+
 // ============================================
 // Orders Controller
 // ============================================
@@ -117,15 +132,46 @@ export class OrdersController {
     }
 
     /**
-     * Get orders by user ID
+     * Get orders by user ID with newspaper details
      */
-    static async getByUserId(userId: string): Promise<OrderResponse[]> {
+    static async getByUserId(userId: string): Promise<OrderWithNewspaperResponse[]> {
         const userOrders = await db.query.orders.findMany({
-            where: eq(orders.userId, userId),
+            where: and(
+                eq(orders.userId, userId),
+                eq(orders.status, "completed")
+            ),
             orderBy: (orders, { desc }) => [desc(orders.createdAt)],
+            with: {
+                newspaper: {
+                    with: {
+                        organization: true,
+                    },
+                },
+            },
         });
 
-        return userOrders as OrderResponse[];
+        return userOrders.map((order) => ({
+            id: order.id,
+            userId: order.userId,
+            newspaperId: order.newspaperId,
+            price: order.price,
+            status: order.status,
+            paymentId: order.paymentId,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+            newspaper: order.newspaper ? {
+                id: order.newspaper.id,
+                issueNumber: order.newspaper.issueNumber,
+                coverImage: order.newspaper.coverImage,
+                price: order.newspaper.price,
+                publishDate: order.newspaper.publishDate,
+                organization: order.newspaper.organization ? {
+                    id: order.newspaper.organization.id,
+                    name: order.newspaper.organization.name,
+                    logo: order.newspaper.organization.logo,
+                } : null,
+            } : null,
+        })) as OrderWithNewspaperResponse[];
     }
 
     /**

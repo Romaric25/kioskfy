@@ -15,7 +15,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatDate } from "@/lib/helpers";
 
-type Props = { scale?: number };
+type Props = { scale?: number, back: string };
 
 // --- PDF Page Component ---
 interface PdfPageProps {
@@ -135,7 +135,7 @@ PdfPage.displayName = "PdfPage";
 
 // --- Main Viewer Component ---
 
-export const NewspaperPdfViewer = ({ scale = 0.60 }: Props) => { // slightly larger default scale
+export const NewspaperPdfViewer = ({ scale = 0.60, back }: Props) => { // slightly larger default scale
     const rootRef = useRef<HTMLDivElement>(null); // New Root Ref
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [loading, setLoading] = useState(true);
@@ -370,7 +370,7 @@ export const NewspaperPdfViewer = ({ scale = 0.60 }: Props) => { // slightly lar
             )}>
                 <div className="p-4 border-b bg-background min-w-64">
                     <div className="mb-4">
-                        <Link href="/organization/dashboard/newspapers">
+                        <Link href={back}>
                             <Button variant="outline" className="w-full gap-2 justify-start">
                                 <ArrowLeft className="h-4 w-4" />
                                 Retour

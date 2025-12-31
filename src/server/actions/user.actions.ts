@@ -73,13 +73,12 @@ export async function updateUserPhone(phone: string | undefined) {
 
     const userId = session.user.id;
 
-    await db
-        .update(users)
-        .set({
-            phone,
-            updatedAt: new Date()
-        })
-        .where(eq(users.id, userId));
+    await auth.api.updateUser({
+        headers: await headers(),
+        body: {
+            phone
+        }
+    });
 
     return { success: true };
 }

@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/use-auth.hook";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { Activity, useEffect } from "react";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import {
     SidebarInset,
@@ -44,6 +44,9 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
     const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const paths = ["/dashboard/render"]
+
+    const isRenderPath = paths.includes(pathname);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -67,30 +70,34 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <Activity mode={isRenderPath ? "hidden" : "visible"}>
+                <AppSidebar />
+            </Activity>
             <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator orientation="vertical" className="mr-2 h-4" />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            {breadcrumbs.map((crumb, index) => (
-                                <div key={crumb.path} className="flex items-center gap-2">
-                                    {index > 0 && <BreadcrumbSeparator />}
-                                    <BreadcrumbItem>
-                                        {index === breadcrumbs.length - 1 ? (
-                                            <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                                        ) : (
-                                            <BreadcrumbLink href={crumb.path}>
-                                                {crumb.label}
-                                            </BreadcrumbLink>
-                                        )}
-                                    </BreadcrumbItem>
-                                </div>
-                            ))}
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </header>
+                <Activity mode={isRenderPath ? "hidden" : "visible"}>
+                    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="mr-2 h-4" />
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                {breadcrumbs.map((crumb, index) => (
+                                    <div key={crumb.path} className="flex items-center gap-2">
+                                        {index > 0 && <BreadcrumbSeparator />}
+                                        <BreadcrumbItem>
+                                            {index === breadcrumbs.length - 1 ? (
+                                                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink href={crumb.path}>
+                                                    {crumb.label}
+                                                </BreadcrumbLink>
+                                            )}
+                                        </BreadcrumbItem>
+                                    </div>
+                                ))}
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                    </header>
+                </Activity>
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0 mt-4">
                     <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-6">
                         {children}

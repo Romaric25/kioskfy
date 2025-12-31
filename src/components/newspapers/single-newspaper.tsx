@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange, Share2, Heart, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, MapPinIcon, BuildingIcon, FileTextIcon, AlertCircleIcon, InfoIcon, ShoppingCart, Trash2, CalendarRange, Share2, Heart } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { formatDate } from "@/lib/helpers";
@@ -40,6 +40,9 @@ import toast from "react-hot-toast";
 import { useCheckFavorite, useToggleFavorite } from "@/hooks/use-favorites.hook";
 import { useAuth } from "@/hooks/use-auth.hook";
 import { RelatedNewspapers } from "@/components/newspapers/related-newspapers";
+import { CartSuccessModal } from "@/components/cart-success-modal";
+import { ShareMenu } from "@/components/share-menu";
+import { useEffect } from "react";
 
 
 export const SingleNewspaper = () => {
@@ -57,6 +60,12 @@ export const SingleNewspaper = () => {
     const { isFavorite, isCheckingFavorite } = useCheckFavorite(id as string, isAuthenticated);
     const toggleFavorite = useToggleFavorite();
 
+    const [currentUrl, setCurrentUrl] = useState("");
+
+    useEffect(() => {
+        setCurrentUrl(window.location.href);
+    }, []);
+
     const handleCartAction = () => {
         if (!newspaper) return;
         if (inCart) {
@@ -64,29 +73,6 @@ export const SingleNewspaper = () => {
         } else {
             addItem(newspaper);
             setShowSuccessModal(true);
-        }
-    };
-
-    const handleShare = async () => {
-        if (!newspaper) return;
-
-        const shareData = {
-            title: newspaper.issueNumber,
-            text: `Découvrez ${newspaper.issueNumber} sur Kioskfy`,
-            url: window.location.href,
-        };
-
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success("Lien copié dans le presse-papier");
-            }
-        } catch (error) {
-            if ((error as Error).name !== "AbortError") {
-                toast.error("Erreur lors du partage");
-            }
         }
     };
 
@@ -198,15 +184,11 @@ export const SingleNewspaper = () => {
                                 <span>{formatDate(newspaper.publishDate, "d MMM yyyy")}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={handleShare}
-                                    className="rounded-full"
-                                    title="Partager"
-                                >
-                                    <Share2 className="h-4 w-4" />
-                                </Button>
+                                <ShareMenu
+                                    title={newspaper.issueNumber}
+                                    text={`Découvrez ${newspaper.issueNumber} sur Kioskfy`}
+                                    url={currentUrl}
+                                />
                                 <Button
                                     variant={isFavorite ? "default" : "outline"}
                                     size="icon"
@@ -316,59 +298,12 @@ export const SingleNewspaper = () => {
             )}
 
             {/* Success Modal */}
-            <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader className="text-center sm:text-center">
-                        <div className="mx-auto mb-4 relative">
-                            <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
-                            <div className="relative bg-gradient-to-br from-green-400 to-green-600 rounded-full p-4 shadow-lg shadow-green-500/30">
-                                <CheckCircle2 className="h-10 w-10 text-white" strokeWidth={2.5} />
-                            </div>
-                        </div>
-                        <DialogTitle className="text-xl font-bold text-center">
-                            Ajouté au panier !
-                        </DialogTitle>
-                        <DialogDescription className="text-center text-muted-foreground">
-                            L'article a bien été ajouté à votre panier.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg border">
-                        <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-md border shadow-sm">
-                            <img
-                                src={newspaper.coverImage}
-                                alt={newspaper.issueNumber}
-                                className="object-cover w-full h-full"
-                            />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold truncate">{newspaper.issueNumber}</h4>
-                            <p className="text-sm text-muted-foreground truncate">
-                                {newspaper.organization?.name}
-                            </p>
-                            <p className="text-sm font-bold text-primary mt-1">
-                                {priceFormatter(newspaper.price)}
-                            </p>
-                        </div>
-                    </div>
-
-                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
-                        <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={handContinuePurchase}
-                        >
-                            Continuer vos achats
-                        </Button>
-                        <Button asChild className="flex-1">
-                            <Link href="/cart">
-                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                Voir le panier
-                            </Link>
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <CartSuccessModal
+                open={showSuccessModal}
+                onOpenChange={setShowSuccessModal}
+                newspaper={newspaper}
+                onContinueShopping={handContinuePurchase}
+            />
         </div>
     );
 };

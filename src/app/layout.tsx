@@ -4,6 +4,11 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { CountriesController } from "@/server/controllers/countries.controller";
 import { OrganizationsController } from "@/server/controllers/organizations.controller";
+import {
+  JsonLd,
+  generateWebsiteSchema,
+  generateOrganizationSchema,
+} from "@/components/seo/json-ld";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +19,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([
@@ -49,10 +56,13 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: "kioskfy" }],
     creator: "kioskfy",
     publisher: "kioskfy",
+    alternates: {
+      canonical: baseUrl,
+    },
     openGraph: {
       type: "website",
       locale: "fr_FR",
-      url: "/",
+      url: baseUrl,
       title: "kioskfy - Votre kiosque numérique de presse africaine",
       description,
       siteName: "kioskfy",
@@ -80,6 +90,7 @@ export async function generateMetadata(): Promise<Metadata> {
     robots: {
       index: true,
       follow: true,
+      nocache: true,
       googleBot: {
         index: true,
         follow: true,
@@ -97,8 +108,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
 
+  // Generate global schemas
+  const websiteSchema = generateWebsiteSchema();
+  const organizationSchema = generateOrganizationSchema();
+
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        {/* Global JSON-LD Schemas */}
+        <JsonLd data={websiteSchema} />
+        <JsonLd data={organizationSchema} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

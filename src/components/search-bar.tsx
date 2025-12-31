@@ -18,8 +18,9 @@ export function SearchBar({ className, inputClassName, placeholder = "Rechercher
     const router = useRouter();
     const searchParams = useSearchParams();
     const timeoutRef = useRef<NodeJS.Timeout>(null);
+    const paths = ["/newspapers", "/magazines", "/categories"];
 
-    const shouldShow = pathname?.startsWith("/newspapers") || pathname?.startsWith("/magazines");
+    const shouldShow = paths.some((path) => pathname?.startsWith(path));
 
     const handleSearch = (term: string) => {
         if (timeoutRef.current) {

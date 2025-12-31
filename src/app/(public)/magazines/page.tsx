@@ -8,6 +8,8 @@ import { Metadata } from "next";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 import { GridSkeleton } from "@/components/ui/loading";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+
 export async function generateMetadata(): Promise<Metadata> {
     const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([
         CountriesController.getAll(),
@@ -34,12 +36,12 @@ export async function generateMetadata(): Promise<Metadata> {
             ...organizations.map((o) => `journaux ${o.name.toLowerCase()}`),
         ],
         alternates: {
-            canonical: "/magazines",
+            canonical: `${baseUrl}/magazines`,
         },
         openGraph: {
             title: "Magazines | kioskfy - Toute la presse africaine",
             description,
-            url: "/magazines",
+            url: `${baseUrl}/magazines`,
             siteName: "kioskfy",
             images: [
                 {
@@ -57,6 +59,18 @@ export async function generateMetadata(): Promise<Metadata> {
             title: "Magazines | kioskfy - Votre kiosque numérique",
             description,
             images: ["/og-image.jpg"],
+        },
+        robots: {
+            index: true,
+            follow: true,
+            nocache: true,
+            googleBot: {
+                index: true,
+                follow: true,
+                "max-video-preview": -1,
+                "max-image-preview": "large",
+                "max-snippet": -1,
+            },
         },
     };
 }

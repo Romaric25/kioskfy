@@ -8,6 +8,8 @@ interface CategoryPageProps {
     params: Promise<{ slug: string }>;
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
     const { slug } = await params;
     const result = await CategoriesController.getBySlug(slug);
@@ -22,7 +24,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         openGraph: {
             type: "website",
             locale: "fr_FR",
-            url: `/categories/${slug}`,
+            url: `${baseUrl}/categories/${slug}`,
             title: `${categoryName} | kioskfy`,
             description,
             siteName: "kioskfy",
@@ -42,7 +44,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
             images: ["/og-image.jpg"],
         },
         alternates: {
-            canonical: `/categories/${slug}`,
+            canonical: `${baseUrl}/categories/${slug}`,
         },
     };
 }

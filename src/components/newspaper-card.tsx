@@ -43,7 +43,7 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
     };
 
     return (
-        <div className="group relative flex flex-col gap-4">
+        <article className="group relative flex flex-col gap-4">
             {/* Zone de couverture avec effet 3D */}
             <div className="relative aspect-[3/4] w-full [perspective:1000px]">
                 <Link href={`/newspapers/${newspaper.id}`} className="block h-full w-full">
@@ -136,6 +136,6 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                     {date}
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

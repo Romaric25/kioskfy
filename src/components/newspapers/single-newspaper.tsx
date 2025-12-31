@@ -138,7 +138,7 @@ export const SingleNewspaper = () => {
                     { label: newspaper.issueNumber }
                 ]}
             />
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <article className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Left Column: Cover Image */}
                 <div className="md:col-span-5 lg:col-span-4">
                     <Dialog>
@@ -298,7 +298,7 @@ export const SingleNewspaper = () => {
                         </Button>
                     </div>
                 </div>
-            </div>
+            </article>
 
             {/* Related Newspapers from same publisher */}
             {newspaper.organization?.id && (

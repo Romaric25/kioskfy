@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { Calendar, ShoppingBag, Eye, Heart } from "lucide-react";
+import { Calendar, ShoppingBag, Eye, Heart, Trash2 } from "lucide-react";
 import { NewspaperResponse } from "@/server/models/newspaper.model";
 import { formatDate } from "@/lib/helpers";
 import { priceFormatter } from "@/lib/price-formatter";
 import { Badge } from "./ui/badge";
 import { useCheckFavorite, useToggleFavorite } from "@/hooks/use-favorites.hook";
 import { useAuth } from "@/hooks/use-auth.hook";
+import { useCartStore } from "@/stores/cart.store";
 import toast from "react-hot-toast";
 
 interface NewspaperCardProps {
@@ -31,6 +32,10 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
     const { isFavorite } = useCheckFavorite(newspaper.id, isAuthenticated);
     const toggleFavorite = useToggleFavorite();
 
+    const items = useCartStore((state) => state.items);
+    const { addItem, removeItem } = useCartStore();
+    const inCart = items.some((item) => item.id === newspaper.id);
+
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -40,6 +45,19 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
             return;
         }
         toggleFavorite.mutate(newspaper.id);
+    };
+
+    const handleCartAction = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (inCart) {
+            removeItem(newspaper.id);
+            toast.success("Retiré du panier");
+        } else {
+            addItem(newspaper);
+            toast.success("Ajouté au panier");
+        }
     };
 
     return (
@@ -72,8 +90,8 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                                     onClick={handleFavorite}
                                     disabled={toggleFavorite.isPending}
                                     className={`h-8 w-8 rounded-full backdrop-blur shadow-sm transition-all duration-200 ${isFavorite
-                                            ? "bg-red-500 hover:bg-red-600 text-white"
-                                            : "bg-white/90 dark:bg-black/80 hover:bg-red-50 hover:text-red-500"
+                                        ? "bg-red-500 hover:bg-red-600 text-white"
+                                        : "bg-white/90 dark:bg-black/80 hover:bg-red-50 hover:text-red-500"
                                         }`}
                                     title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                                 >
@@ -105,9 +123,14 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                                 </div>
                             )}
 
-                            {/* Overlay Action au survol (Mobile: toujours visible via bouton, Desktop: au survol) */}
-                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
-                                <Button size="sm" variant="secondary" className="rounded-full h-10 w-10 p-0 shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                            {/* Overlay Action au survol */}
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="rounded-full h-10 w-10 p-0 shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75"
+                                    title="Voir le journal"
+                                >
                                     <Eye className="h-4 w-4" />
                                 </Button>
                             </div>
@@ -135,6 +158,25 @@ export function NewspaperCard({ newspaper }: NewspaperCardProps) {
                     <Calendar className="mr-1.5 h-3 w-3" />
                     {date}
                 </div>
+
+                <Button
+                    size="sm"
+                    variant={inCart ? "destructive" : "default"}
+                    className="w-full mt-2"
+                    onClick={handleCartAction}
+                >
+                    {inCart ? (
+                        <>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Retirer du panier
+                        </>
+                    ) : (
+                        <>
+                            <ShoppingBag className="mr-2 h-4 w-4" />
+                            Acheter
+                        </>
+                    )}
+                </Button>
             </div>
         </article>
     );

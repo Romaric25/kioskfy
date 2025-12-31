@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 import Image from "next/image";
 
@@ -45,6 +45,7 @@ import { RelatedNewspapers } from "@/components/newspapers/related-newspapers";
 export const SingleNewspaper = () => {
     const { id } = useParams();
     const pathname = usePathname();
+    const router = useRouter();
     const { newspaper, newspaperLoading, newspaperError } = useNewspaper(id as string);
     const items = useCartStore((state) => state.items);
     const { addItem, removeItem } = useCartStore();
@@ -96,6 +97,11 @@ export const SingleNewspaper = () => {
         }
         if (!newspaper) return;
         toggleFavorite.mutate(newspaper.id);
+    };
+
+    const handContinuePurchase = () => {
+        router.push("/newspapers");
+        setShowSuccessModal(true);
     };
 
     if (newspaperLoading) {
@@ -350,7 +356,7 @@ export const SingleNewspaper = () => {
                         <Button
                             variant="outline"
                             className="flex-1"
-                            onClick={() => setShowSuccessModal(false)}
+                            onClick={handContinuePurchase}
                         >
                             Continuer vos achats
                         </Button>

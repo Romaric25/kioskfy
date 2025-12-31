@@ -31,7 +31,7 @@ export function CartPopover() {
                     <span>Panier</span>
                     <Badge variant="secondary" className="rounded-full">{cartCount} articles</Badge>
                 </div>
-                <ScrollArea className="h-full max-h-[300px]">
+                <ScrollArea className="h-full">
                     {items.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
                             <div className="bg-muted p-4 rounded-full">

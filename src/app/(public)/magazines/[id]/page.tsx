@@ -32,7 +32,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         year: "numeric",
     });
 
-    const title = `${orgName} - N°${item.issueNumber}`;
+    const title = `${orgName} - ${item.issueNumber}`;
     const description = `Lisez le numéro ${item.issueNumber} du ${orgName} (${countryName}) paru le ${publishDate}. Disponible en lecture numérique immédiate sur kioskfy.`;
 
     const images = item.coverImage ? [item.coverImage] : ["/og-image.jpg"];
@@ -42,7 +42,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         description,
         keywords: [
             orgName,
-            `N°${item.issueNumber}`,
+            item.issueNumber,
             countryName,
             "presse africaine",
             "kiosque numérique",

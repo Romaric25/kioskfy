@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { accounts } from "@/db/auth-schema";
+import { accounts, users } from "@/db/auth-schema";
 import { eq, and } from "drizzle-orm";
 import { hashPassword } from "@/lib/argon2";
 import { headers } from "next/headers";
@@ -54,6 +54,32 @@ export async function setUserPassword(password: string) {
             updatedAt: new Date(),
         });
     }
+
+    return { success: true };
+}
+
+export async function updateUserPhone(phone: string | undefined) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) {
+        throw new Error("Non autorisé");
+    }
+
+    if (!phone) {
+        return { success: false, message: "Numéro de téléphone non fourni" };
+    }
+
+    const userId = session.user.id;
+
+    await db
+        .update(users)
+        .set({
+            phone,
+            updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
 
     return { success: true };
 }

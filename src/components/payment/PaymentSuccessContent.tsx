@@ -16,7 +16,7 @@ export function PaymentSuccessContent() {
     const { clearCart } = useCartStore();
     const { paymentId, clearPaymentId } = usePaymentStore();
     const { paymentVerify } = useVerifyPayment(paymentId);
-    if (!paymentVerify) redirect("/");
+
     const hasProcessedPayment = useRef(false);
 
     // Handle user phone update via server action

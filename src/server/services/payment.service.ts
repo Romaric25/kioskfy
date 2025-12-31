@@ -25,4 +25,29 @@ export const paymentService = new Elysia({ prefix: "/payments" })
                 description: "Initialize a payment session with Moneroo",
             },
         }
+    )
+    .get(
+        "/verify/:paymentId",
+        async ({ params, set }) => {
+            try {
+                const result = await PaymentController.verifyPayment(params.paymentId);
+                return result;
+            } catch (error: any) {
+                set.status = 500;
+                return {
+                    success: false,
+                    message: error.message || "Failed to verify payment",
+                };
+            }
+        },
+        {
+            params: t.Object({
+                paymentId: t.String(),
+            }),
+            detail: {
+                tags: ["Payment"],
+                summary: "Verify a payment",
+                description: "Verify the status of a payment with Moneroo",
+            },
+        }
     );

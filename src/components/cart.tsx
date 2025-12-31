@@ -23,6 +23,7 @@ import type { Payment } from "@/server/models/payment.model";
 import { useInitializePayment } from "@/hooks/use-payment.hook";
 import { useCreateOrderBatch, useUpdatePaymentId } from "@/hooks/use-orders.hook";
 import toast from "react-hot-toast";
+import { usePaymentStore } from "@/stores/use-payment.store";
 
 export function Cart() {
     const { items, removeItem, total, clearCart } = useCartStore();
@@ -40,6 +41,7 @@ export function Cart() {
 
     const { mutateAsync: createOrders } = useCreateOrderBatch();
     const { mutateAsync: updatePaymentId } = useUpdatePaymentId();
+    const {setPaymentId } = usePaymentStore();
 
     const handleInitializePayment = async () => {
         if (!isAuthenticated || !user) {
@@ -101,6 +103,7 @@ export function Cart() {
             }
 
             console.log("[Cart] Payment initialized:", paymentId);
+            setPaymentId(paymentId);
 
             // Step 3: Update orders with payment ID
             await updatePaymentId({ orderIds, paymentId });

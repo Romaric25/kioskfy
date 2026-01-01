@@ -194,4 +194,39 @@ export const ordersService = new Elysia({ prefix: "/orders" })
                 description: "Check if the authenticated user has already purchased a newspaper",
             },
         }
+    )
+
+    /**
+     * GET /orders/organization/:organizationId/stats
+     * Get organization revenue and sales stats
+     */
+    .get(
+        "/organization/:organizationId/stats",
+        async ({ params, set }) => {
+            try {
+                const stats = await OrdersController.getOrganizationStats(params.organizationId);
+
+                return {
+                    success: true,
+                    data: stats,
+                };
+            } catch (error: any) {
+                set.status = 500;
+                return {
+                    success: false,
+                    message: error.message || "Failed to fetch organization stats",
+                };
+            }
+        },
+        {
+            auth: true,
+            params: t.Object({
+                organizationId: t.String(),
+            }),
+            detail: {
+                tags: ["Orders"],
+                summary: "Get organization stats",
+                description: "Get revenue and recent sales for an organization",
+            },
+        }
     );

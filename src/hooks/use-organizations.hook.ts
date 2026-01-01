@@ -13,6 +13,7 @@ export const useOrganizations = () => {
     isLoading: isLoadingOrganizations,
     error: errorOrganizations,
     isSuccess: isSuccessOrganizations,
+    refetch
   } = useQuery({
     queryKey: ["organizations"],
     queryFn: async () => await authClient.organization.list(),
@@ -23,6 +24,7 @@ export const useOrganizations = () => {
     isLoadingOrganizations,
     errorOrganizations,
     isSuccessOrganizations,
+    refetch,
   };
 };
 

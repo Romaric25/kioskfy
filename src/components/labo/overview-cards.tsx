@@ -5,8 +5,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DollarSign, Newspaper, Users, Activity } from "lucide-react";
+import { useOrganizationStats } from "@/hooks/use-organization-stats.hook";
+import { priceFormatter } from "@/lib/price-formatter";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNewspapersByOrganization } from "@/hooks";
 
-export const OverviewCards = () => {
+interface OverviewCardsProps {
+  organizationId: string;
+}
+
+export const OverviewCards = ({ organizationId }: OverviewCardsProps) => {
+  const { data: stats, isLoading } = useOrganizationStats(organizationId);
+  const { newspapers } = useNewspapersByOrganization(organizationId);
+
+  const publishedNewspapersCount = newspapers?.data?.filter(newspaper => newspaper.status === "published").length || 0;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -17,8 +30,12 @@ export const OverviewCards = () => {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">45,231.89 €</div>
-          <p className="text-xs text-muted-foreground">+20.1% par rapport au mois dernier</p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-24 mb-1" />
+          ) : (
+            <div className="text-2xl font-bold">{priceFormatter(stats?.totalRevenue || 0)}</div>
+          )}
+          <p className="text-xs text-muted-foreground">Revenu total généré</p>
         </CardContent>
       </Card>
       <Card>
@@ -29,8 +46,12 @@ export const OverviewCards = () => {
           <Newspaper className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">+12</div>
-          <p className="text-xs text-muted-foreground">+2 nouveaux ce mois-ci</p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-12 mb-1" />
+          ) : (
+            <div className="text-2xl font-bold">{publishedNewspapersCount}</div>
+          )}
+          <p className="text-xs text-muted-foreground">Journaux actuellement publiés</p>
         </CardContent>
       </Card>
       <Card>
@@ -39,8 +60,12 @@ export const OverviewCards = () => {
           <Activity className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">+573</div>
-          <p className="text-xs text-muted-foreground">+201 depuis la dernière heure</p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-12 mb-1" />
+          ) : (
+            <div className="text-2xl font-bold">{stats?.salesCount || 0}</div>
+          )}
+          <p className="text-xs text-muted-foreground">Nombre total de ventes</p>
         </CardContent>
       </Card>
       <Card>

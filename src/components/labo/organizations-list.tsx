@@ -21,11 +21,13 @@ import { useRouter } from "next/navigation";
 import { useSelectedOrganizationStore } from "@/stores/use-selected-organization.store";
 import { OrganizationsListSkeleton } from "./skeleton/organizations-list-skeleton";
 import { fr } from "date-fns/locale";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function OrganizationsList() {
   const dateLocale = fr;
-  const { organizations, isLoadingOrganizations } = useOrganizations();
-  console.log("organizations", organizations);
+  const { organizations, isLoadingOrganizations, refetch } = useOrganizations();
+  const queryClient = useQueryClient();
+
   const router = useRouter();
   const { setSelectedOrganization, selectedOrganizationId } =
     useSelectedOrganizationStore();
@@ -39,8 +41,7 @@ export function OrganizationsList() {
       const org = await authClient.organization.setActive({
         organizationId: id,
       });
-
-      // Store in Zustand store for persistence
+      await queryClient.invalidateQueries();
       setSelectedOrganization(id, slug);
 
       router.push(`/organization/dashboard/overview`);

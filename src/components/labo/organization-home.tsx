@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { OverviewCards } from "./overview-cards";
 import { RecentSales } from "./recent-sales";
+import { ChartAreaInteractive } from "./chart-area-interactive";
 import { useActiveOrganization, useOrganization } from "@/hooks/use-organizations.hook";
 
 import { OrganizationHomeSkeleton } from "./skeleton/organization-home-skeleton";
@@ -32,25 +33,18 @@ export const OrganizationHome = () => {
               <Button>Télécharger le rapport</Button>
             </div>
           </div>
-          <OverviewCards />
+          <OverviewCards organizationId={organisation.data.id} />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Aperçu des revenus</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <div className="h-[350px] flex items-center justify-center text-muted-foreground bg-muted/10 rounded-md border border-dashed">
-                  Graphique des revenus
-                </div>
-              </CardContent>
-            </Card>
+            <div className="col-span-4">
+              <ChartAreaInteractive />
+            </div>
             <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Ventes récentes</CardTitle>
                 <CardDescription>Vous avez réalisé 265 ventes ce mois-ci.</CardDescription>
               </CardHeader>
               <CardContent>
-                <RecentSales />
+                <RecentSales organizationId={organisation.data.id} />
               </CardContent>
             </Card>
           </div>

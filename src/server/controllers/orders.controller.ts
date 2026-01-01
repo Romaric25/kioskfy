@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { orders } from "@/db/app-schema";
-import { eq, and } from "drizzle-orm";
+import { orders, revenueShares, newspapers } from "@/db/app-schema";
+import { eq, and, sum, count, ne, desc } from "drizzle-orm";
 
 // ============================================
 // Types
@@ -201,5 +201,130 @@ export class OrdersController {
         });
 
         return !!existingOrder;
+    }
+
+    /**
+     * Get organization stats (revenue, sales count, recent sales)
+     */
+    static async getOrganizationStats(organizationId: string) {
+        // 1. Get aggregated stats (total revenue, count)
+        const stats = await db
+            .select({
+                totalRevenue: sum(revenueShares.organizationAmount),
+                salesCount: count(revenueShares.id),
+            })
+            .from(revenueShares)
+            .where(
+                and(
+                    eq(revenueShares.organizationId, organizationId),
+                    ne(revenueShares.status, "cancelled")
+                )
+            );
+
+        const totalRevenue = stats[0]?.totalRevenue || "0";
+        const salesCount = stats[0]?.salesCount || 0;
+
+        // 2. Get recent sales with details
+        const recentSales = await db.query.revenueShares.findMany({
+            where: and(
+                eq(revenueShares.organizationId, organizationId),
+                ne(revenueShares.status, "cancelled")
+            ),
+            orderBy: (revenueShares, { desc }) => [desc(revenueShares.createdAt)],
+            limit: 5,
+            with: {
+                order: {
+                    with: {
+                        user: {
+                            columns: {
+                                name: true,
+                                email: true,
+                                image: true,
+                            }
+                        },
+                        newspaper: {
+                            columns: {
+                                issueNumber: true,
+                                coverImage: true,
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Count published newspapers
+        const newspapersStats = await db
+            .select({ count: count(newspapers.id) })
+            .from(newspapers)
+            .where(
+                and(
+                    eq(newspapers.organizationId, organizationId),
+                    eq(newspapers.status, "published")
+                )
+            );
+
+        // 5. Accounting stats
+        const accountingStats = await db
+            .select({
+                status: revenueShares.status,
+                total: sum(revenueShares.organizationAmount),
+            })
+            .from(revenueShares)
+            .where(
+                and(
+                    eq(revenueShares.organizationId, organizationId),
+                    ne(revenueShares.status, "cancelled")
+                )
+            )
+            .groupBy(revenueShares.status);
+
+        let availableBalance = 0;
+        let withdrawnAmount = 0;
+
+        accountingStats.forEach(stat => {
+            if (stat.status === 'paid_out') {
+                withdrawnAmount += Number(stat.total);
+            } else {
+                availableBalance += Number(stat.total);
+            }
+        });
+
+        // 6. Payouts history
+        const payouts = await db
+            .select({
+                date: revenueShares.paidOutAt,
+                amount: sum(revenueShares.organizationAmount),
+                count: count(revenueShares.id)
+            })
+            .from(revenueShares)
+            .where(
+                and(
+                    eq(revenueShares.organizationId, organizationId),
+                    eq(revenueShares.status, "paid_out")
+                )
+            )
+            .groupBy(revenueShares.paidOutAt)
+            .orderBy(desc(revenueShares.paidOutAt));
+
+        return {
+            totalRevenue: Number(totalRevenue),
+            salesCount: Number(salesCount),
+            publishedNewspapersCount: Number(newspapersStats[0]?.count || 0),
+            availableBalance: Number(availableBalance),
+            withdrawnAmount: Number(withdrawnAmount),
+            payouts: payouts.map(p => ({
+                date: p.date,
+                amount: Number(p.amount),
+                count: Number(p.count)
+            })),
+            recentSales: recentSales.map(sale => ({
+                id: sale.id,
+                amount: Number(sale.organizationAmount),
+                user: sale.order.user,
+                newspaper: sale.order.newspaper,
+                createdAt: sale.createdAt,
+            }))
+        };
     }
 }

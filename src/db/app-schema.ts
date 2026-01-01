@@ -260,6 +260,62 @@ export const organizationBalances = mysqlTable(
 );
 
 // ============================================
+// Withdrawals Table
+// Historique des demandes de retrait
+// ============================================
+export const withdrawalStatusEnum = mysqlEnum("withdrawal_status", [
+    "pending",      // En attente de traitement
+    "processing",   // En cours de traitement
+    "completed",    // Retrait effectué
+    "failed",       // Échec du retrait
+    "cancelled",    // Annulé
+]);
+
+export const withdrawals = mysqlTable(
+    "withdrawals",
+    {
+        id: int("id").primaryKey().autoincrement(),
+        organizationId: varchar("organizationId", { length: 36 })
+            .notNull()
+            .references(() => organizations.id),
+
+        // Montant
+        amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+        currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+
+        // Statut
+        status: withdrawalStatusEnum.default("pending").notNull(),
+
+        // Informations de paiement
+        paymentMethod: varchar("paymentMethod", { length: 50 }), // mobile_money, bank_transfer, etc.
+        paymentDetails: text("paymentDetails"), // JSON avec les détails (numéro, banque, etc.)
+
+        // Référence externe (ID du paiement Moneroo, etc.)
+        externalReference: varchar("externalReference", { length: 255 }),
+
+        // Notes
+        notes: text("notes"),
+        adminNotes: text("adminNotes"),
+
+        // Dates
+        requestedAt: timestamp("requestedAt").defaultNow().notNull(),
+        processedAt: timestamp("processedAt"),
+        completedAt: timestamp("completedAt"),
+
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+        updatedAt: timestamp("updatedAt")
+            .defaultNow()
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("withdrawals_organizationId_idx").on(table.organizationId),
+        index("withdrawals_status_idx").on(table.status),
+        index("withdrawals_requestedAt_idx").on(table.requestedAt),
+    ]
+);
+
+// ============================================
 // Rate Limit Table
 // ============================================
 export const rateLimit = mysqlTable("rateLimit", {
@@ -352,6 +408,14 @@ export const revenueSharesRelations = relations(revenueShares, ({ one }) => ({
 export const organizationBalancesRelations = relations(organizationBalances, ({ one }) => ({
     organization: one(organizations, {
         fields: [organizationBalances.organizationId],
+        references: [organizations.id],
+    }),
+}));
+
+// Withdrawals relations
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+    organization: one(organizations, {
+        fields: [withdrawals.organizationId],
         references: [organizations.id],
     }),
 }));

@@ -50,6 +50,13 @@
       "when": 1767055510035,
       "tag": "0006_tense_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1767302601889,
+      "tag": "0007_magical_the_fallen",
+      "breakpoints": true
     }
   ]
 }

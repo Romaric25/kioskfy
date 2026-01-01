@@ -1,13 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface OrderState {
-    selectedItemIds: string[];
-    addItem: (id: string) => void;
-    removeItem: (id: string) => void;
-    hasItem: (id: string) => boolean;
-    clearItems: () => void;
-}
+import { OrderState } from "@/app/interfaces/order.interface";
 
 export const useOrderStore = create<OrderState>()(
     persist(

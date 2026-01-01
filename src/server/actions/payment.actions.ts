@@ -1,14 +1,73 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { orders, revenueShares } from "@/db/app-schema";
-import { eq } from "drizzle-orm";
+import { orders, revenueShares, accountingLedger } from "@/db/app-schema";
+import { eq, desc } from "drizzle-orm";
 
 // ============================================
 // Constants
 // ============================================
 const PLATFORM_PERCENTAGE = 25;
 const ORGANIZATION_PERCENTAGE = 75;
+
+/**
+ * Get the current balances for an organization from the ledger
+ */
+async function getCurrentBalances(organizationId: string): Promise<{ organizationBalance: number; platformBalance: number }> {
+    const lastEntry = await db.query.accountingLedger.findFirst({
+        where: eq(accountingLedger.organizationId, organizationId),
+        orderBy: [desc(accountingLedger.id)],
+    });
+
+    if (!lastEntry) {
+        return { organizationBalance: 0, platformBalance: 0 };
+    }
+
+    return {
+        organizationBalance: Number(lastEntry.organizationBalance),
+        platformBalance: Number(lastEntry.platformBalance),
+    };
+}
+
+/**
+ * Record a purchase in the accounting ledger
+ */
+async function recordPurchaseInLedger(
+    organizationId: string,
+    orderId: string,
+    organizationAmount: number,
+    platformAmount: number,
+    description: string,
+    currency: string
+) {
+    // Get current balances
+    const currentBalances = await getCurrentBalances(organizationId);
+
+    // Calculate new balances
+    const newOrganizationBalance = currentBalances.organizationBalance + organizationAmount;
+    const newPlatformBalance = currentBalances.platformBalance + platformAmount;
+
+    // Insert new entry
+    await db.insert(accountingLedger).values({
+        organizationId,
+        transactionType: "purchase",
+        referenceId: orderId,
+        organizationAmount: organizationAmount.toFixed(2),
+        platformAmount: platformAmount.toFixed(2),
+        organizationBalance: newOrganizationBalance.toFixed(2),
+        platformBalance: newPlatformBalance.toFixed(2),
+        description,
+        currency,
+    });
+
+    console.log(`[Accounting Ledger] Entry created for order ${orderId}:`, {
+        organizationId,
+        organizationAmount,
+        platformAmount,
+        newOrganizationBalance,
+        newPlatformBalance,
+    });
+}
 
 export async function handlePaymentSuccess(paymentId: string) {
     if (!paymentId) {
@@ -54,7 +113,7 @@ export async function handlePaymentSuccess(paymentId: string) {
 
         console.log(`[Payment Success] ${orderIds.length} order(s) marked as completed:`, orderIds);
 
-        // Create revenue share records for each order
+        // Create revenue share records and accounting ledger entries for each order
         const revenueSharePromises = foundOrders.map(async (order) => {
             if (!order.newspaper?.organizationId) {
                 console.warn(`[Payment Success] No organization found for order ${order.id}, skipping revenue share`);
@@ -66,6 +125,7 @@ export async function handlePaymentSuccess(paymentId: string) {
             const organizationAmount = (totalAmount * ORGANIZATION_PERCENTAGE) / 100;
             const currency = order.newspaper?.country?.currency || "XAF";
 
+            // Create revenue share
             await db.insert(revenueShares).values({
                 orderId: order.id,
                 organizationId: order.newspaper.organizationId,
@@ -88,13 +148,23 @@ export async function handlePaymentSuccess(paymentId: string) {
                 currency,
             });
 
+            // Record in accounting ledger
+            await recordPurchaseInLedger(
+                order.newspaper.organizationId,
+                order.id,
+                organizationAmount,
+                platformAmount,
+                `Vente journal #${order.newspaper?.issueNumber || order.newspaperId}`,
+                currency
+            );
+
             return order.id;
         });
 
         const processedOrders = await Promise.all(revenueSharePromises);
         const successfulShares = processedOrders.filter((id) => id !== null);
 
-        console.log(`[Payment Success] Revenue shares created: ${successfulShares.length}/${foundOrders.length}`);
+        console.log(`[Payment Success] Revenue shares and ledger entries created: ${successfulShares.length}/${foundOrders.length}`);
 
         return {
             success: true,
@@ -109,3 +179,4 @@ export async function handlePaymentSuccess(paymentId: string) {
         };
     }
 }
+

@@ -1,12 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface NewspaperState {
-  selectedNewspaperId: string | null;
-  selectedNewspaperSlug: string | null;
-  setSelectedNewspaper: (id: string, slug: string) => void;
-  clearSelectedNewspaper: () => void;
-}
+import { NewspaperState } from "@/app/interfaces/newspaper.interface";
 
 export const useSelectedNewspaperStore = create<NewspaperState>()(
   persist(

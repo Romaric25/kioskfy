@@ -1,33 +1,6 @@
 import { client } from "@/lib/client";
 import { useQuery } from "@tanstack/react-query";
-
-interface RecentSale {
-    id: string;
-    amount: number;
-    user: {
-        name: string | null;
-        email: string;
-        image: string | null;
-    } | null;
-    newspaper: {
-        issueNumber: string | null;
-        coverImage: string | null;
-    } | null;
-    createdAt: Date;
-}
-
-interface OrganizationStatsResponse {
-    totalRevenue: number;
-    salesCount: number;
-    availableBalance: number;
-    withdrawnAmount: number;
-    payouts: {
-        date: Date | null;
-        amount: number;
-        count: number;
-    }[];
-    recentSales: RecentSale[];
-}
+import { OrganizationStatsResponse } from "@/app/interfaces/organization-stats.interface";
 
 export function useOrganizationStats(organizationId: string | undefined) {
     return useQuery({

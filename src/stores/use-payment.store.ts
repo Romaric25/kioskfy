@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface PaymentStore {
-    paymentId: string;
-    setPaymentId: (paymentId: string) => void;
-    clearPaymentId: () => void;
-}
+import { PaymentStore } from "@/app/interfaces/payment.interface";
 
 export const usePaymentStore = create<PaymentStore>()(
     persist(

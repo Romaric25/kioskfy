@@ -222,6 +222,50 @@ export const revenueShares = mysqlTable(
 );
 
 // ============================================
+// Accounting Ledger Table
+// Grand livre comptable pour suivre toutes les transactions
+// ============================================
+export const transactionTypeEnum = mysqlEnum("transaction_type", [
+    "purchase",      // Achat d'un journal
+    "withdrawal",    // Retrait vers le compte de l'organisation
+    "refund",        // Remboursement
+]);
+
+export const accountingLedger = mysqlTable(
+    "accounting_ledger",
+    {
+        id: int("id").primaryKey().autoincrement(),
+        organizationId: varchar("organizationId", { length: 36 })
+            .notNull()
+            .references(() => organizations.id),
+
+        // Type et référence de la transaction
+        transactionType: transactionTypeEnum.notNull(),
+        referenceId: varchar("referenceId", { length: 36 }).notNull(), // orderId ou payoutId
+
+        // Montants de la transaction
+        organizationAmount: decimal("organizationAmount", { precision: 10, scale: 2 }).notNull(),
+        platformAmount: decimal("platformAmount", { precision: 10, scale: 2 }).notNull(),
+
+        // Soldes après transaction
+        organizationBalance: decimal("organizationBalance", { precision: 10, scale: 2 }).notNull(),
+        platformBalance: decimal("platformBalance", { precision: 10, scale: 2 }).notNull(),
+
+        // Métadonnées
+        description: text("description"),
+        currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+    },
+    (table) => [
+        index("accounting_ledger_organizationId_idx").on(table.organizationId),
+        index("accounting_ledger_transactionType_idx").on(table.transactionType),
+        index("accounting_ledger_referenceId_idx").on(table.referenceId),
+        index("accounting_ledger_createdAt_idx").on(table.createdAt),
+    ]
+);
+
+// ============================================
 // Rate Limit Table
 // ============================================
 export const rateLimit = mysqlTable("rateLimit", {
@@ -306,6 +350,14 @@ export const revenueSharesRelations = relations(revenueShares, ({ one }) => ({
     }),
     organization: one(organizations, {
         fields: [revenueShares.organizationId],
+        references: [organizations.id],
+    }),
+}));
+
+// Accounting Ledger relations
+export const accountingLedgerRelations = relations(accountingLedger, ({ one }) => ({
+    organization: one(organizations, {
+        fields: [accountingLedger.organizationId],
         references: [organizations.id],
     }),
 }));

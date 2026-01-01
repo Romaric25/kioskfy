@@ -1,12 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface SelectedOrganizationState {
-  selectedOrganizationId: string | null;
-  selectedOrganizationSlug: string | null;
-  setSelectedOrganization: (id: string, slug: string) => void;
-  clearSelectedOrganization: () => void;
-}
+import { SelectedOrganizationState } from "@/app/interfaces/selected-organization.interface";
 
 export const useSelectedOrganizationStore = create<SelectedOrganizationState>()(
   persist(

@@ -1,15 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { NewspaperResponse } from "@/server/models/newspaper.model";
-
-interface CartState {
-    items: NewspaperResponse[];
-    addItem: (item: NewspaperResponse) => void;
-    removeItem: (id: string) => void;
-    clearCart: () => void;
-    isInCart: (id: string) => boolean;
-    total: () => number;
-}
+import { CartState } from "@/app/interfaces/cart.interface";
 
 export const useCartStore = create<CartState>()(
     persist(

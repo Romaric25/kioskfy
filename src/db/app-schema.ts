@@ -222,46 +222,40 @@ export const revenueShares = mysqlTable(
 );
 
 // ============================================
-// Accounting Ledger Table
-// Grand livre comptable pour suivre toutes les transactions
+// Organization Balances Table
+// Stocke les soldes cumulés pour chaque organisation
 // ============================================
-export const transactionTypeEnum = mysqlEnum("transaction_type", [
-    "purchase",      // Achat d'un journal
-    "withdrawal",    // Retrait vers le compte de l'organisation
-    "refund",        // Remboursement
-]);
-
-export const accountingLedger = mysqlTable(
-    "accounting_ledger",
+export const organizationBalances = mysqlTable(
+    "organization_balances",
     {
         id: int("id").primaryKey().autoincrement(),
         organizationId: varchar("organizationId", { length: 36 })
             .notNull()
+            .unique()
             .references(() => organizations.id),
 
-        // Type et référence de la transaction
-        transactionType: transactionTypeEnum.notNull(),
-        referenceId: varchar("referenceId", { length: 36 }).notNull(), // orderId ou payoutId
+        // Soldes cumulés
+        organizationAmount: decimal("organizationAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+        platformAmount: decimal("platformAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
 
-        // Montants de la transaction
-        organizationAmount: decimal("organizationAmount", { precision: 10, scale: 2 }).notNull(),
-        platformAmount: decimal("platformAmount", { precision: 10, scale: 2 }).notNull(),
+        // Compteurs
+        totalSales: int("totalSales").default(0).notNull(),
+        totalWithdrawals: int("totalWithdrawals").default(0).notNull(),
 
-        // Soldes après transaction
-        organizationBalance: decimal("organizationBalance", { precision: 10, scale: 2 }).notNull(),
-        platformBalance: decimal("platformBalance", { precision: 10, scale: 2 }).notNull(),
+        // Montant déjà retiré
+        withdrawnAmount: decimal("withdrawnAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
 
-        // Métadonnées
-        description: text("description"),
+        // Devise
         currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
 
         createdAt: timestamp("createdAt").defaultNow().notNull(),
+        updatedAt: timestamp("updatedAt")
+            .defaultNow()
+            .$onUpdate(() => new Date())
+            .notNull(),
     },
     (table) => [
-        index("accounting_ledger_organizationId_idx").on(table.organizationId),
-        index("accounting_ledger_transactionType_idx").on(table.transactionType),
-        index("accounting_ledger_referenceId_idx").on(table.referenceId),
-        index("accounting_ledger_createdAt_idx").on(table.createdAt),
+        index("organization_balances_organizationId_idx").on(table.organizationId),
     ]
 );
 
@@ -354,10 +348,10 @@ export const revenueSharesRelations = relations(revenueShares, ({ one }) => ({
     }),
 }));
 
-// Accounting Ledger relations
-export const accountingLedgerRelations = relations(accountingLedger, ({ one }) => ({
+// Organization Balances relations
+export const organizationBalancesRelations = relations(organizationBalances, ({ one }) => ({
     organization: one(organizations, {
-        fields: [accountingLedger.organizationId],
+        fields: [organizationBalances.organizationId],
         references: [organizations.id],
     }),
 }));

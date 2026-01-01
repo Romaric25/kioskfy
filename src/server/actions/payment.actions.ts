@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { orders, revenueShares, accountingLedger } from "@/db/app-schema";
-import { eq, desc } from "drizzle-orm";
+import { orders, revenueShares, organizationBalances } from "@/db/app-schema";
+import { eq, sql } from "drizzle-orm";
 
 // ============================================
 // Constants
@@ -11,62 +11,38 @@ const PLATFORM_PERCENTAGE = 25;
 const ORGANIZATION_PERCENTAGE = 75;
 
 /**
- * Get the current balances for an organization from the ledger
+ * Update organization balances after a purchase
  */
-async function getCurrentBalances(organizationId: string): Promise<{ organizationBalance: number; platformBalance: number }> {
-    const lastEntry = await db.query.accountingLedger.findFirst({
-        where: eq(accountingLedger.organizationId, organizationId),
-        orderBy: [desc(accountingLedger.id)],
-    });
-
-    if (!lastEntry) {
-        return { organizationBalance: 0, platformBalance: 0 };
-    }
-
-    return {
-        organizationBalance: Number(lastEntry.organizationBalance),
-        platformBalance: Number(lastEntry.platformBalance),
-    };
-}
-
-/**
- * Record a purchase in the accounting ledger
- */
-async function recordPurchaseInLedger(
+async function updateBalancesAfterPurchase(
     organizationId: string,
-    orderId: string,
     organizationAmount: number,
     platformAmount: number,
-    description: string,
     currency: string
 ) {
-    // Get current balances
-    const currentBalances = await getCurrentBalances(organizationId);
+    // Try to update existing balance
+    const result = await db
+        .update(organizationBalances)
+        .set({
+            organizationAmount: sql`${organizationBalances.organizationAmount} + ${organizationAmount.toFixed(2)}`,
+            platformAmount: sql`${organizationBalances.platformAmount} + ${platformAmount.toFixed(2)}`,
+            totalSales: sql`${organizationBalances.totalSales} + 1`,
+        })
+        .where(eq(organizationBalances.organizationId, organizationId));
 
-    // Calculate new balances
-    const newOrganizationBalance = currentBalances.organizationBalance + organizationAmount;
-    const newPlatformBalance = currentBalances.platformBalance + platformAmount;
+    // If no rows updated, create a new balance record
+    if (result[0].affectedRows === 0) {
+        await db.insert(organizationBalances).values({
+            organizationId,
+            organizationAmount: organizationAmount.toFixed(2),
+            platformAmount: platformAmount.toFixed(2),
+            totalSales: 1,
+            totalWithdrawals: 0,
+            withdrawnAmount: "0.00",
+            currency,
+        });
+    }
 
-    // Insert new entry
-    await db.insert(accountingLedger).values({
-        organizationId,
-        transactionType: "purchase",
-        referenceId: orderId,
-        organizationAmount: organizationAmount.toFixed(2),
-        platformAmount: platformAmount.toFixed(2),
-        organizationBalance: newOrganizationBalance.toFixed(2),
-        platformBalance: newPlatformBalance.toFixed(2),
-        description,
-        currency,
-    });
-
-    console.log(`[Accounting Ledger] Entry created for order ${orderId}:`, {
-        organizationId,
-        organizationAmount,
-        platformAmount,
-        newOrganizationBalance,
-        newPlatformBalance,
-    });
+    console.log(`[Accounting] Balance updated for org ${organizationId}: +${organizationAmount} (org), +${platformAmount} (platform)`);
 }
 
 export async function handlePaymentSuccess(paymentId: string) {
@@ -113,7 +89,7 @@ export async function handlePaymentSuccess(paymentId: string) {
 
         console.log(`[Payment Success] ${orderIds.length} order(s) marked as completed:`, orderIds);
 
-        // Create revenue share records and accounting ledger entries for each order
+        // Create revenue share records and update balances for each order
         const revenueSharePromises = foundOrders.map(async (order) => {
             if (!order.newspaper?.organizationId) {
                 console.warn(`[Payment Success] No organization found for order ${order.id}, skipping revenue share`);
@@ -148,13 +124,11 @@ export async function handlePaymentSuccess(paymentId: string) {
                 currency,
             });
 
-            // Record in accounting ledger
-            await recordPurchaseInLedger(
+            // Update organization balances
+            await updateBalancesAfterPurchase(
                 order.newspaper.organizationId,
-                order.id,
                 organizationAmount,
                 platformAmount,
-                `Vente journal #${order.newspaper?.issueNumber || order.newspaperId}`,
                 currency
             );
 
@@ -164,7 +138,7 @@ export async function handlePaymentSuccess(paymentId: string) {
         const processedOrders = await Promise.all(revenueSharePromises);
         const successfulShares = processedOrders.filter((id) => id !== null);
 
-        console.log(`[Payment Success] Revenue shares and ledger entries created: ${successfulShares.length}/${foundOrders.length}`);
+        console.log(`[Payment Success] Revenue shares and balances updated: ${successfulShares.length}/${foundOrders.length}`);
 
         return {
             success: true,
@@ -179,4 +153,3 @@ export async function handlePaymentSuccess(paymentId: string) {
         };
     }
 }
-

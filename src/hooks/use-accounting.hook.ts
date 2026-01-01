@@ -1,13 +1,13 @@
 import { client } from "@/lib/client";
-import { useQuery } from "@tanstack/react-query";
-import { LedgerEntryResponse, AccountingBalances } from "@/app/interfaces/accounting.interface";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { OrganizationBalanceResponse } from "@/app/interfaces/accounting.interface";
 
 /**
- * Hook pour récupérer les soldes comptables d'une organisation
+ * Hook pour récupérer les soldes d'une organisation
  */
-export function useAccountingBalances(organizationId: string | undefined) {
+export function useOrganizationBalances(organizationId: string | undefined) {
     return useQuery({
-        queryKey: ["accountingBalances", organizationId],
+        queryKey: ["organizationBalances", organizationId],
         queryFn: async () => {
             if (!organizationId) throw new Error("Organization ID is required");
 
@@ -17,59 +17,31 @@ export function useAccountingBalances(organizationId: string | undefined) {
                 throw new Error((error as any).value?.message || "Failed to fetch balances");
             }
 
-            return (data as any).data as { organizationBalance: number; platformBalance: number };
+            return (data as any).data as OrganizationBalanceResponse;
         },
         enabled: !!organizationId,
     });
 }
 
 /**
- * Hook pour récupérer le résumé comptable d'une organisation
+ * Hook pour synchroniser les soldes depuis les revenue shares
  */
-export function useAccountingSummary(organizationId: string | undefined) {
-    return useQuery({
-        queryKey: ["accountingSummary", organizationId],
-        queryFn: async () => {
-            if (!organizationId) throw new Error("Organization ID is required");
+export function useSyncBalances() {
+    const queryClient = useQueryClient();
 
-            const { data, error } = await client.api.v1.accounting.organization({ organizationId }).summary.get();
+    return useMutation({
+        mutationFn: async (organizationId: string) => {
+            const { data, error } = await client.api.v1.accounting.organization({ organizationId }).sync.post();
 
             if (error) {
-                throw new Error((error as any).value?.message || "Failed to fetch accounting summary");
+                throw new Error((error as any).value?.message || "Failed to sync balances");
             }
 
-            return (data as any).data as AccountingBalances;
+            return (data as any).data as OrganizationBalanceResponse;
         },
-        enabled: !!organizationId,
-    });
-}
-
-/**
- * Hook pour récupérer les entrées du grand livre d'une organisation
- */
-export function useAccountingLedger(
-    organizationId: string | undefined,
-    limit: number = 50,
-    offset: number = 0
-) {
-    return useQuery({
-        queryKey: ["accountingLedger", organizationId, limit, offset],
-        queryFn: async () => {
-            if (!organizationId) throw new Error("Organization ID is required");
-
-            const { data, error } = await client.api.v1.accounting.organization({ organizationId }).ledger.get({
-                query: {
-                    limit: limit.toString(),
-                    offset: offset.toString(),
-                },
-            });
-
-            if (error) {
-                throw new Error((error as any).value?.message || "Failed to fetch ledger entries");
-            }
-
-            return (data as any).data as LedgerEntryResponse[];
+        onSuccess: (data, organizationId) => {
+            // Invalidate the balances query to refetch fresh data
+            queryClient.invalidateQueries({ queryKey: ["organizationBalances", organizationId] });
         },
-        enabled: !!organizationId,
     });
 }

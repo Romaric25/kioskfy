@@ -297,14 +297,9 @@ export const withdrawals = mysqlTable(
 
         // Notes
         notes: text("notes"),
-        adminNotes: text("adminNotes"),
 
         // Dates
-        initiatedAt: timestamp("initiatedAt"), // Date d'initialisation du payout Moneroo
         requestedAt: timestamp("requestedAt").defaultNow().notNull(),
-        processedAt: timestamp("processedAt"),
-        completedAt: timestamp("completedAt"),
-
         createdAt: timestamp("createdAt").defaultNow().notNull(),
         updatedAt: timestamp("updatedAt")
             .defaultNow()

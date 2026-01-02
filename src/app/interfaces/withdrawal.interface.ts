@@ -9,12 +9,9 @@ export interface WithdrawalResponse {
     paymentMethod: string | null;
     paymentDetails: string | null;
     externalReference: string | null;
+    userId: string | null;
     notes: string | null;
-    initiatedAt: Date | null;
     requestedAt: Date;
-    processedAt: Date | null;
-    completedAt: Date | null;
-    userId?: string | null;
     user?: {
         id: string;
         name: string | null;
@@ -28,10 +25,8 @@ export interface CreateWithdrawalInput {
     paymentMethod?: string;
     paymentDetails?: string;
     notes?: string;
+    currency?: string;
     externalReference?: string;
     status?: WithdrawalStatus;
     userId?: string;
-    initiatedAt?: string;
-    processedAt?: string;
-    completedAt?: string;
 }

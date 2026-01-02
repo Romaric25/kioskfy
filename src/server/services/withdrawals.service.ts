@@ -26,9 +26,6 @@ export const withdrawalsService = new Elysia({ prefix: "/withdrawals" })
                     externalReference: body.externalReference,
                     status: body.status as any,
                     userId: body.userId,
-                    initiatedAt: body.initiatedAt,
-                    processedAt: body.processedAt,
-                    completedAt: body.completedAt,
                 });
 
                 return {
@@ -54,9 +51,6 @@ export const withdrawalsService = new Elysia({ prefix: "/withdrawals" })
                 externalReference: t.Optional(t.String()),
                 status: t.Optional(t.String()),
                 userId: t.Optional(t.String()),
-                initiatedAt: t.Optional(t.String()),
-                processedAt: t.Optional(t.String()),
-                completedAt: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Withdrawals"],

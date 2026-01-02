@@ -7,7 +7,7 @@ import { WithdrawalsController } from "./withdrawals.controller";
 const host = process.env.MONEROO_HOST;
 const secretKey = process.env.MONEROO_SECRET_KEY;
 export class PayoutsController {
- 
+
 
     /**
      * Initialize a payout with Moneroo
@@ -61,7 +61,6 @@ export class PayoutsController {
                 await WithdrawalsController.updateStatus(
                     input.withdrawalId,
                     "processing",
-                    "Payout initialized with Moneroo",
                     externalReference
                 );
             }

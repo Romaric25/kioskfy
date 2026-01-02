@@ -1,49 +1,14 @@
 import { db } from "@/lib/db";
 import { withdrawals, organizationBalances } from "@/db/app-schema";
 import { eq, desc, sql } from "drizzle-orm";
+import {
+    WithdrawalStatus,
+    CreateWithdrawalInput,
+    WithdrawalResponse,
+} from "@/app/interfaces/withdrawal.interface";
 
-// ============================================
-// Types
-// ============================================
-
-export type WithdrawalStatus = "pending" | "processing" | "completed" | "failed" | "cancelled";
-
-export interface CreateWithdrawalInput {
-    organizationId: string;
-    amount: number;
-    paymentMethod?: string;
-    paymentDetails?: string;
-    notes?: string;
-    currency?: string;
-    externalReference?: string;
-    status?: WithdrawalStatus;
-    userId?: string;
-    initiatedAt?: string;
-    processedAt?: string;
-    completedAt?: string;
-}
-
-export interface WithdrawalResponse {
-    id: number;
-    organizationId: string;
-    amount: number;
-    currency: string;
-    status: WithdrawalStatus;
-    paymentMethod: string | null;
-    paymentDetails: string | null;
-    externalReference: string | null;
-    userId: string | null;
-    notes: string | null;
-    initiatedAt: Date | null;
-    requestedAt: Date;
-    processedAt: Date | null;
-    completedAt: Date | null;
-    user?: {
-        id: string;
-        name: string | null;
-        email: string;
-    } | null;
-}
+// Re-export types for backward compatibility
+export type { WithdrawalStatus, CreateWithdrawalInput, WithdrawalResponse };
 
 // ============================================
 // Withdrawals Controller
@@ -76,9 +41,6 @@ export class WithdrawalsController {
             notes: input.notes || null,
             externalReference: input.externalReference || null,
             userId: input.userId || null,
-            initiatedAt: input.initiatedAt ? new Date(input.initiatedAt) : null,
-            processedAt: input.processedAt ? new Date(input.processedAt) : (status === "processing" ? new Date() : null),
-            completedAt: input.completedAt ? new Date(input.completedAt) : null,
         });
 
         const insertId = result[0].insertId;
@@ -146,7 +108,6 @@ export class WithdrawalsController {
     static async updateStatus(
         id: number,
         status: WithdrawalStatus,
-        adminNotes?: string,
         externalReference?: string
     ): Promise<WithdrawalResponse | null> {
         const withdrawal = await db.query.withdrawals.findFirst({
@@ -159,21 +120,11 @@ export class WithdrawalsController {
 
         const updates: any = { status };
 
-        if (adminNotes) {
-            updates.adminNotes = adminNotes;
-        }
-
         if (externalReference) {
             updates.externalReference = externalReference;
         }
 
-        if (status === "processing") {
-            updates.processedAt = new Date();
-        }
-
         if (status === "completed") {
-            updates.completedAt = new Date();
-
             // Update organization balance (deduct withdrawn amount)
             await db
                 .update(organizationBalances)
@@ -215,7 +166,6 @@ export class WithdrawalsController {
             .update(withdrawals)
             .set({
                 status: "cancelled",
-                adminNotes: reason || "Cancelled by user",
             })
             .where(eq(withdrawals.id, id));
 
@@ -237,10 +187,7 @@ export class WithdrawalsController {
             externalReference: withdrawal.externalReference,
             userId: withdrawal.userId,
             notes: withdrawal.notes,
-            initiatedAt: withdrawal.initiatedAt,
             requestedAt: withdrawal.requestedAt,
-            processedAt: withdrawal.processedAt,
-            completedAt: withdrawal.completedAt,
             user: withdrawal.user ? {
                 id: withdrawal.user.id,
                 name: withdrawal.user.name,

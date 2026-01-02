@@ -15,6 +15,12 @@ export interface CreateWithdrawalInput {
     paymentDetails?: string;
     notes?: string;
     currency?: string;
+    externalReference?: string;
+    status?: WithdrawalStatus;
+    userId?: string;
+    initiatedAt?: string;
+    processedAt?: string;
+    completedAt?: string;
 }
 
 export interface WithdrawalResponse {
@@ -26,10 +32,17 @@ export interface WithdrawalResponse {
     paymentMethod: string | null;
     paymentDetails: string | null;
     externalReference: string | null;
+    userId: string | null;
     notes: string | null;
+    initiatedAt: Date | null;
     requestedAt: Date;
     processedAt: Date | null;
     completedAt: Date | null;
+    user?: {
+        id: string;
+        name: string | null;
+        email: string;
+    } | null;
 }
 
 // ============================================
@@ -51,17 +64,34 @@ export class WithdrawalsController {
         }
 
         // Create withdrawal request
+        const status = input.status || "pending";
+
         const result = await db.insert(withdrawals).values({
             organizationId: input.organizationId,
             amount: input.amount.toFixed(2),
             currency: input.currency || "XAF",
-            status: "pending",
+            status: status,
             paymentMethod: input.paymentMethod || null,
             paymentDetails: input.paymentDetails || null,
             notes: input.notes || null,
+            externalReference: input.externalReference || null,
+            userId: input.userId || null,
+            initiatedAt: input.initiatedAt ? new Date(input.initiatedAt) : null,
+            processedAt: input.processedAt ? new Date(input.processedAt) : (status === "processing" ? new Date() : null),
+            completedAt: input.completedAt ? new Date(input.completedAt) : null,
         });
 
         const insertId = result[0].insertId;
+
+        // Update organization_balances: deduct from available, add to withdrawn
+        await db
+            .update(organizationBalances)
+            .set({
+                organizationAmount: sql`${organizationBalances.organizationAmount} - ${input.amount.toFixed(2)}`,
+                withdrawnAmount: sql`${organizationBalances.withdrawnAmount} + ${input.amount.toFixed(2)}`,
+                totalWithdrawals: sql`${organizationBalances.totalWithdrawals} + 1`,
+            })
+            .where(eq(organizationBalances.organizationId, input.organizationId));
 
         const withdrawal = await db.query.withdrawals.findFirst({
             where: eq(withdrawals.id, insertId),
@@ -87,6 +117,9 @@ export class WithdrawalsController {
             orderBy: [desc(withdrawals.requestedAt)],
             limit,
             offset,
+            with: {
+                user: true,
+            },
         });
 
         return results.map(this.formatWithdrawal);
@@ -202,10 +235,17 @@ export class WithdrawalsController {
             paymentMethod: withdrawal.paymentMethod,
             paymentDetails: withdrawal.paymentDetails,
             externalReference: withdrawal.externalReference,
+            userId: withdrawal.userId,
             notes: withdrawal.notes,
+            initiatedAt: withdrawal.initiatedAt,
             requestedAt: withdrawal.requestedAt,
             processedAt: withdrawal.processedAt,
             completedAt: withdrawal.completedAt,
+            user: withdrawal.user ? {
+                id: withdrawal.user.id,
+                name: withdrawal.user.name,
+                email: withdrawal.user.email,
+            } : null,
         };
     }
 }

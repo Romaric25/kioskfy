@@ -279,6 +279,8 @@ export const withdrawals = mysqlTable(
             .notNull()
             .references(() => organizations.id),
 
+        userId: varchar("userId", { length: 255 }).references(() => users.id),
+
         // Montant
         amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
         currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
@@ -298,6 +300,7 @@ export const withdrawals = mysqlTable(
         adminNotes: text("adminNotes"),
 
         // Dates
+        initiatedAt: timestamp("initiatedAt"), // Date d'initialisation du payout Moneroo
         requestedAt: timestamp("requestedAt").defaultNow().notNull(),
         processedAt: timestamp("processedAt"),
         completedAt: timestamp("completedAt"),
@@ -417,6 +420,10 @@ export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
     organization: one(organizations, {
         fields: [withdrawals.organizationId],
         references: [organizations.id],
+    }),
+    user: one(users, {
+        fields: [withdrawals.userId],
+        references: [users.id],
     }),
 }));
 

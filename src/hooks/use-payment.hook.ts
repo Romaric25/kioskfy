@@ -1,7 +1,7 @@
 import { client } from "@/lib/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Payment } from "@/server/models/payment.model";
-import type { MonerooPaymentVerifyResponse } from "@/server/controllers/payment.controller";
+import type { MonerooPaymentVerifyResponse } from "@/app/interfaces/moneroo-payment.interface";
 
 export const useInitializePayment = () => {
     const { mutateAsync, isPending, isError, error, isSuccess, data } = useMutation({
@@ -38,5 +38,5 @@ export const useVerifyPayment = (paymentId: string | null) => {
         retry: false,
     });
 
-    return {paymentVerify, isLoading, isError, error, refetch };
+    return { paymentVerify, isLoading, isError, error, refetch };
 };

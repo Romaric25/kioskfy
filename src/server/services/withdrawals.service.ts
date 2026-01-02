@@ -23,6 +23,12 @@ export const withdrawalsService = new Elysia({ prefix: "/withdrawals" })
                     paymentMethod: body.paymentMethod,
                     paymentDetails: body.paymentDetails,
                     notes: body.notes,
+                    externalReference: body.externalReference,
+                    status: body.status as any,
+                    userId: body.userId,
+                    initiatedAt: body.initiatedAt,
+                    processedAt: body.processedAt,
+                    completedAt: body.completedAt,
                 });
 
                 return {
@@ -45,6 +51,12 @@ export const withdrawalsService = new Elysia({ prefix: "/withdrawals" })
                 paymentMethod: t.Optional(t.String()),
                 paymentDetails: t.Optional(t.String()),
                 notes: t.Optional(t.String()),
+                externalReference: t.Optional(t.String()),
+                status: t.Optional(t.String()),
+                userId: t.Optional(t.String()),
+                initiatedAt: t.Optional(t.String()),
+                processedAt: t.Optional(t.String()),
+                completedAt: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Withdrawals"],

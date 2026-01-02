@@ -15,6 +15,7 @@ import { favoriteCountriesService } from './services/favorite-countries.service'
 import { ordersService } from './services/orders.service';
 import { accountingService } from './services/accounting.service';
 import { withdrawalsService } from './services/withdrawals.service';
+import { payoutsService } from './services/payouts.service';
 import { serverTiming } from '@elysiajs/server-timing'
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -72,6 +73,7 @@ const app = new Elysia({ prefix: '/api/v1' })
     .use(ordersService)
     .use(accountingService)
     .use(withdrawalsService)
+    .use(payoutsService)
     // Block /docs access in production
     .onBeforeHandle(({ request, set }) => {
         if (isProduction && request.url.includes('/api/v1/docs')) {

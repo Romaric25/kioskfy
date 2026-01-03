@@ -489,3 +489,21 @@ export const userFavoriteCountriesRelations = relations(userFavoriteCountries, (
         references: [countries.id],
     }),
 }));
+
+// ============================================
+// Site Settings Table
+// ============================================
+export const siteSettings = mysqlTable("site_settings", {
+    id: int("id").primaryKey().autoincrement(),
+    key: varchar("key", { length: 255 }).notNull().unique(), // ex: 'site_name', 'maintenance_mode'
+    value: text("value"), // Valeur stockée en texte (peut être JSON)
+    type: varchar("type", { length: 50 }).default("string").notNull(), // 'string', 'boolean', 'json', 'number'
+    label: varchar("label", { length: 255 }), // Libellé pour l'interface admin
+    description: text("description"), // Description de ce que fait ce paramètre
+    group: varchar("group", { length: 50 }).default("general").notNull(), // 'general', 'social', 'seo', 'maintenance'
+    isPublic: boolean("isPublic").default(false).notNull(), // Si true, accessible publiquement via API
+    updatedAt: timestamp("updatedAt")
+        .defaultNow()
+        .$onUpdate(() => new Date())
+        .notNull(),
+});

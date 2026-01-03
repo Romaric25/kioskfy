@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { CountriesController } from "@/server/controllers/countries.controller";
 import { OrganizationsController } from "@/server/controllers/organizations.controller";
+import { ConstructionAlert } from "@/components/construction-alert";
 import {
   JsonLd,
   generateWebsiteSchema,
@@ -128,6 +129,7 @@ export default async function RootLayout({
               {children}
             </main>
           </div>
+          <ConstructionAlert />
         </Providers>
       </body>
     </html>

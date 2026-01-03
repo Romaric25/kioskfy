@@ -33,6 +33,9 @@ import { useRouter } from "next/navigation"
 import { useAssignRole } from "@/hooks/use-users.hook"
 import toast from "react-hot-toast"
 import Link from "next/link"
+import { useProjectPermission } from "@/hooks/use-project-permission.hook"
+import { ProjectPermissions } from "@/lib/permissions"
+import { formatDate } from "@/lib/helpers"
 
 export interface UserTableData {
     id: string
@@ -57,8 +60,12 @@ const AVAILABLE_ROLES = [
 const UserActions = ({ row }: { row: Row<UserTableData> }) => {
     const user = row.original
     const router = useRouter()
+
     const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
     const [selectedRole, setSelectedRole] = useState<string>(user.role || "user")
+    const { hasPermission, isLoading } = useProjectPermission({
+        permissions: { project: [ProjectPermissions.ATTRIBUTE] }
+    });
 
     const { assignRole, isAssigningRole } = useAssignRole({
         onSuccess: () => {
@@ -88,10 +95,12 @@ const UserActions = ({ row }: { row: Row<UserTableData> }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => setIsRoleDialogOpen(true)}>
-                        <Shield className="mr-2 h-4 w-4" />
-                        Assigner un rôle
-                    </DropdownMenuItem>
+                    {hasPermission && (
+                        <DropdownMenuItem onClick={() => setIsRoleDialogOpen(true)}>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Assigner un rôle
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                         <Link href={`/admin/users/${user.id}`}>
@@ -228,7 +237,7 @@ export const columns: ColumnDef<UserTableData>[] = [
     {
         accessorKey: "createdAt",
         header: "Date d'inscription",
-        cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString(),
+        cell: ({ row }) => formatDate(row.getValue("createdAt"), undefined, "dd/MM/yyyy"),
     },
     {
         id: "actions",

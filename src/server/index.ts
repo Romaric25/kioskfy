@@ -18,6 +18,7 @@ import { withdrawalsService } from './services/withdrawals.service';
 import { payoutsService } from './services/payouts.service';
 import { adminStatsService } from './services/admin-stats.service';
 import { geoipService } from './services/geoip.service';
+import { settingsService } from './services/settings.service';
 import { serverTiming } from '@elysiajs/server-timing'
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -56,7 +57,8 @@ const app = new Elysia({ prefix: '/api/v1' })
                     { name: 'Protected', description: 'Endpoints protégés (authentification requise)' },
                     { name: 'Orders', description: 'Gestion des commandes' },
                     { name: 'Accounting', description: 'Gestion comptable' },
-                    { name: 'GeoIP', description: 'Géolocalisation IP' }
+                    { name: 'GeoIP', description: 'Géolocalisation IP' },
+                    { name: 'Settings', description: 'Configuration du site' }
                 ],
                 paths: await OpenAPI.getPaths(),
                 components: await OpenAPI.components,
@@ -79,6 +81,7 @@ const app = new Elysia({ prefix: '/api/v1' })
     .use(payoutsService)
     .use(adminStatsService)
     .use(geoipService)
+    .use(settingsService)
     // Block /docs access in production
     .onBeforeHandle(({ request, set }) => {
         if (isProduction && request.url.includes('/api/v1/docs')) {

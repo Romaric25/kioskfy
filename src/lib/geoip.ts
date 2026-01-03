@@ -48,7 +48,11 @@ export const getGeoIPInfo = async (ip: string): Promise<GeoIPInfo | null> => {
     }
 
     const readerInstance = await getReader()
-    if (!readerInstance) return null
+
+    // Si pas de base locale, utiliser le fallback API
+    if (!readerInstance) {
+        return await fetchFromFallback(ip)
+    }
 
     try {
         const result = readerInstance.get(ip)
@@ -62,6 +66,29 @@ export const getGeoIPInfo = async (ip: string): Promise<GeoIPInfo | null> => {
         }
     } catch (error) {
         console.error(`Erreur lors de la géolocalisation de l'IP ${ip}:`, error)
+        return fetchFromFallback(ip) // Tenter le fallback aussi en cas d'erreur de lecture
+    }
+}
+
+/**
+ * Fallback utilisant une API publique gratuite (ip-api.com)
+ * Attention: Limité à 45 requêtes / minute
+ */
+const fetchFromFallback = async (ip: string): Promise<GeoIPInfo | null> => {
+    try {
+        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,continent,continentCode`)
+        const data = await response.json()
+
+        if (data.status !== 'success') return null
+
+        return {
+            country: data.country,
+            countryCode: data.countryCode,
+            continent: data.continent,
+            continentCode: data.continentCode
+        }
+    } catch (error) {
+        // Silently fail if fallback also fails
         return null
     }
 }

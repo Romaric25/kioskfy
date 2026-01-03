@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/client";
+import { AdminOrderResponse } from "@/app/interfaces/order.interface";
 
 export function useAdminOrders(params: {
     limit?: number;
     offset?: number;
     status?: string;
 } = {}) {
-    return useQuery({
+    return useQuery<AdminOrderResponse[]>({
         queryKey: ["admin-orders", params],
         queryFn: async () => {
             const response = await client.api.v1.orders.get({
@@ -35,7 +36,7 @@ export function useAdminOrders(params: {
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (responseData as any).data;
+            return (responseData as any).data as AdminOrderResponse[];
         },
     });
 }

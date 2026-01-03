@@ -35,3 +35,23 @@ export interface CreateWithdrawalInput {
     status?: WithdrawalStatus;
     userId?: string;
 }
+
+/**
+ * Type simplifié pour l'affichage dans les tables
+ */
+export type WithdrawalTableData = {
+    id: number;
+    organizationId: string;
+    amount: number;
+    currency: string;
+    status: WithdrawalStatus;
+    requestedAt: Date;
+    user?: {
+        name: string;
+        email: string;
+    } | null;
+    organization?: {
+        name: string;
+        slug: string;
+    };
+};

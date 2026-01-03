@@ -13,25 +13,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { priceFormatter } from "@/lib/price-formatter"
+import { WithdrawalTableData } from "@/app/interfaces/withdrawal.interface"
 
-export type Withdrawal = {
-    id: number
-    organizationId: string
-    amount: number
-    currency: string
-    status: "pending" | "processing" | "completed" | "failed" | "cancelled"
-    requestedAt: Date
-    user?: {
-        name: string
-        email: string
-    } | null
-    organization?: {
-        name: string
-        slug: string
-    }
-}
-
-export const columns: ColumnDef<Withdrawal>[] = [
+export const columns: ColumnDef<WithdrawalTableData>[] = [
     {
         accessorKey: "organization",
         header: "Organization",

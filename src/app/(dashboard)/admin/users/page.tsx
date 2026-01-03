@@ -1,6 +1,6 @@
 import { UsersController } from "@/server/controllers/users.controller";
 import { DataTable } from "@/components/admin/data-table";
-import { columns } from "./columns";
+import { columns, UserTableData } from "./columns";
 
 export default async function UsersPage() {
     const result = await UsersController.getAll();
@@ -9,14 +9,15 @@ export default async function UsersPage() {
         return <div>Failed to load users</div>;
     }
 
-    const users = result.data.map((user: any) => ({
+    const users: UserTableData[] = result.data.map((user: any) => ({
         id: user.id,
         name: user.name,
         lastName: user.lastName,
         email: user.email,
         image: user.image,
         phone: user.phone,
-        typeUser: user.typeUser, // Assuming this field exists or needs mapping
+        typeUser: user.typeUser,
+        role: user.role,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
     }));

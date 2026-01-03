@@ -111,6 +111,8 @@ export default async function proxy(request: NextRequest) {
 
     const isAgency = session?.user?.typeUser === "agency";
     const isClient = session?.user?.typeUser === "client";
+    const adminRole = ['admin', 'superadmin', 'moderator']
+    const isAdmin = adminRole.includes(session?.user?.role ?? '');
 
     const ProtectedRoutes = ["/admin", "/dashboard", "/organization/dashboard", '/cart',];
     const publicRoutes = ["/organization/login", "/organization/subscription", "/login", "/register", "/forgot-password", "/reset-password"];
@@ -176,6 +178,22 @@ export default async function proxy(request: NextRequest) {
             const loginUrl = new URL(`/login`, request.url);
             loginUrl.searchParams.set("redirect", pathname);
             return NextResponse.redirect(loginUrl);
+        }
+
+        // ============================================
+        // Bloquer l'accès aux routes /admin pour les utilisateurs non-admin
+        // ============================================
+        if ((pathname.startsWith("/admin") || hostname === adminHost) && !isAdmin) {
+            // L'utilisateur est connecté mais n'a pas le rôle admin
+            // Rediriger vers le dashboard approprié selon son type
+            if (isAgency) {
+                return NextResponse.redirect(new URL('/organization/dashboard', request.url));
+            }
+            if (isClient) {
+                return NextResponse.redirect(new URL('/dashboard', request.url));
+            }
+            // Fallback: rediriger vers la page d'accueil
+            return NextResponse.redirect(new URL('/', request.url));
         }
     }
 

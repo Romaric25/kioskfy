@@ -77,6 +77,8 @@ export const auth = betterAuth({
         autoSignIn: false, // Désactivé pour permettre l'envoi d'email de vérification
         requireEmailVerification: false,
         sendVerificationEmailOnSignUp: false, // Désactivé car géré manuellement
+        minPasswordLength: 8,
+        maxPasswordLength: 128,
         password: {
             hash: hashPassword,
             verify: verifyPassword,
@@ -288,6 +290,13 @@ export const auth = betterAuth({
         }),
         // emailOTP plugin removed to avoid conflict with link-based verification
     ],
+    advanced: {
+        ipAddress: {
+            ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
+            disableIpTracking: false
+        },
+        
+    }
 });
 
 // Type exports for use in other parts of the application

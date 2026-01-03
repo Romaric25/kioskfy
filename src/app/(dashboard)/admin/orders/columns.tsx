@@ -17,35 +17,9 @@ import { priceFormatter } from "@/lib/price-formatter"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AdminOrderResponse } from "@/app/interfaces/order.interface"
 
-export type AdminOrder = {
-    id: string
-    userId: string | null
-    newspaperId: string
-    price: string
-    status: string
-    paymentId: string | null
-    createdAt: string | Date
-    updatedAt: string | Date
-    user?: {
-        name: string | null
-        email: string
-        image: string | null
-    } | null
-    newspaper?: {
-        id: string
-        issueNumber: string
-        coverImage: string
-        price: string
-        publishDate: string | Date
-        organization: {
-            id: string
-            name: string
-        } | null
-    } | null
-}
-
-export const columns: ColumnDef<AdminOrder>[] = [
+export const columns: ColumnDef<AdminOrderResponse>[] = [
     {
         id: "select",
         header: ({ table }) => (

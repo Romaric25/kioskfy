@@ -43,6 +43,8 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const isAgency = user?.typeUser === "agency";
+  const adminRole = ['admin', 'superadmin', 'moderator']
+  const isAdmin = adminRole.includes(user?.role ?? '');
 
   return (
     <>
@@ -137,6 +139,15 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <Activity mode={isAdmin ? "visible" : "hidden"}>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/home" className="cursor-pointer font-medium">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Administration</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </Activity>
                       <Activity mode={isAgency ? "visible" : "hidden"}>
                         <DropdownMenuItem asChild>
                           <Link href="/organization/dashboard" className="cursor-pointer font-medium">

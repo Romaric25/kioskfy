@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { orders, revenueShares, newspapers } from "@/db/app-schema";
+import { users } from "@/db/auth-schema";
 import { eq, and, sum, count, ne, desc } from "drizzle-orm";
 
 // ============================================
@@ -37,6 +38,11 @@ export interface OrderWithNewspaperResponse extends OrderResponse {
             logo: string | null;
         } | null;
     } | null;
+    user?: {
+        name: string | null;
+        email: string;
+        image: string | null;
+    } | null;
 }
 
 // ============================================
@@ -44,6 +50,62 @@ export interface OrderWithNewspaperResponse extends OrderResponse {
 // ============================================
 
 export class OrdersController {
+    /**
+     * Get all orders (admin)
+     */
+    static async getAll(
+        limit: number = 50,
+        offset: number = 0,
+        status?: string
+    ): Promise<OrderWithNewspaperResponse[]> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const whereClause = status ? eq(orders.status, status as any) : undefined;
+
+        const results = await db.query.orders.findMany({
+            where: whereClause,
+            orderBy: [desc(orders.createdAt)],
+            limit,
+            offset,
+            with: {
+                newspaper: {
+                    with: {
+                        organization: true,
+                    },
+                },
+                user: true,
+            },
+        });
+
+        return results.map((order) => ({
+            id: order.id,
+            userId: order.userId,
+            newspaperId: order.newspaperId,
+            price: order.price,
+            status: order.status,
+            paymentId: order.paymentId,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+            user: order.user ? {
+                name: order.user.name,
+                email: order.user.email,
+                image: order.user.image,
+            } : null,
+            newspaper: order.newspaper ? {
+                id: order.newspaper.id,
+                issueNumber: order.newspaper.issueNumber,
+                coverImage: order.newspaper.coverImage,
+                price: order.newspaper.price,
+                publishDate: order.newspaper.publishDate,
+                organization: order.newspaper.organization ? {
+                    id: order.newspaper.organization.id,
+                    name: order.newspaper.organization.name,
+                    logo: order.newspaper.organization.logo,
+                } : null,
+            } : null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        })) as unknown as OrderWithNewspaperResponse[];
+    }
+
     /**
      * Create a new order
      */

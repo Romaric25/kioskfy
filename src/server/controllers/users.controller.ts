@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import type { PartnershipRegisterUser } from "@/server/models/user.model";
 import { db } from "@/lib/db";
 import { users, verifications } from "@/db/auth-schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { generateRandomVerificationToken } from "@/lib/token-generate";
 import { render } from "@react-email/components";
@@ -201,7 +201,7 @@ export class UsersController {
     static async resendToken(input: { token: string }) {
         const { token } = input;
         let email;
-        
+
         try {
             if (!token) {
                 return {
@@ -372,6 +372,31 @@ export class UsersController {
 
         } catch (error) {
             console.error("Get user by id error:", error);
+            return {
+                success: false,
+                status: 500,
+                error: error instanceof Error ? error.message : "Internal Server Error"
+            };
+        }
+    }
+
+    /**
+     * Get all users (admin)
+     */
+    static async getAll() {
+        try {
+            const allUsers = await db.query.users.findMany({
+                orderBy: [desc(users.createdAt)],
+                // limit: 100 // optional limit
+            });
+
+            return {
+                success: true,
+                status: 200,
+                data: allUsers
+            };
+        } catch (error) {
+            console.error("Get all users error:", error);
             return {
                 success: false,
                 status: 500,

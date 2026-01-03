@@ -23,12 +23,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-
 import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Dialog,
@@ -99,9 +93,14 @@ import { useDeleteOrganization, useOrganization, useUpdateOrganization } from "@
 import { useSelectedOrganizationStore } from "@/stores/use-selected-organization.store";
 import { useGetCountryByName } from "@/hooks/use-get-country-by-name.hook";
 import { UploadFile } from "@/components/upload-file";
+import { useOrganizationPermission } from "@/hooks/use-organization-permission.hook";
+import { AgencyPermissions } from "@/lib/permissions";
 
 export const SettingsOrganization = () => {
-  const { slug } = useParams();
+  const { hasPermission: canManagePayouts } = useOrganizationPermission({
+    permissions: { agency: [AgencyPermissions.PAYOUT_MANAGE] },
+  });
+
   const { selectedOrganizationId, clearSelectedOrganization } =
     useSelectedOrganizationStore();
   const {
@@ -226,6 +225,10 @@ export const SettingsOrganization = () => {
   // Removed custom handlers handleLogoChange and handleRemoveLogo as UploadFile handles this
 
   const onSubmit = async (values: OrganizationSettings): Promise<void> => {
+    if (!canManagePayouts) {
+        toast.error("Vous n'avez pas la permission de modifier les paramètres de l'organisation");
+        return;
+    }
     try {
       const organizationData = {
         name: values.name,

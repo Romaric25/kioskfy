@@ -370,3 +370,52 @@ export const useAllAgencies = () => {
     errorAgencies,
   };
 };
+/**
+ * Hook pour récupérer TOUTES les organisations (pour l'admin dashboard)
+ * Contrairement à useAllAgencies, ne filtre pas sur isActive
+ */
+export const useAdminOrganizations = () => {
+  const {
+    data: agenciesResponse,
+    isLoading: isLoadingAgencies,
+    error: errorAgencies,
+  } = useQuery({
+    queryKey: ["admin-organizations"],
+    queryFn: async () => {
+      const result = await client.api.v1.organizations.get();
+      return result.data;
+    },
+    staleTime: 1 * 60 * 1000,
+  });
+
+  return {
+    organizations: agenciesResponse?.data || [],
+    isLoadingOrganizations: isLoadingAgencies,
+    errorOrganizations: errorAgencies,
+  };
+};
+
+/**
+ * Hook pour récupérer une organisation spécifique par ID (pour l'admin)
+ */
+export const useAdminOrganization = (id: string) => {
+  const {
+    data: response,
+    isLoading: isLoadingOrganization,
+    error: errorOrganization,
+  } = useQuery({
+    queryKey: ["admin-organization", id],
+    queryFn: async () => {
+      const result = await client.api.v1.organizations({ id }).get();
+      return result.data;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return {
+    organization: response?.data,
+    isLoadingOrganization,
+    errorOrganization,
+  };
+};

@@ -15,6 +15,47 @@ export const ordersService = new Elysia({ prefix: "/orders" })
     .use(betterAuthPlugin)
 
     /**
+     * GET /orders
+     * Get all orders (admin)
+     */
+    .get(
+        "/",
+        async ({ query, set }) => {
+            try {
+                const limit = query.limit ? parseInt(query.limit) : 50;
+                const offset = query.offset ? parseInt(query.offset) : 0;
+                const status = query.status;
+
+                const orders = await OrdersController.getAll(limit, offset, status);
+
+                return {
+                    success: true,
+                    data: orders,
+                };
+            } catch (error: any) {
+                set.status = 500;
+                return {
+                    success: false,
+                    message: error.message || "Failed to fetch orders",
+                };
+            }
+        },
+        {
+            auth: true,
+            query: t.Object({
+                limit: t.Optional(t.String()),
+                offset: t.Optional(t.String()),
+                status: t.Optional(t.String()),
+            }),
+            detail: {
+                tags: ["Orders"],
+                summary: "Get all orders",
+                description: "Get all orders with pagination and filtering (Admin)",
+            },
+        }
+    )
+
+    /**
      * POST /orders
      * Create a single order
      */

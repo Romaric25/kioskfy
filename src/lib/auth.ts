@@ -197,6 +197,21 @@ export const auth = betterAuth({
                             required: true,
                             input: true,
                         },
+                        suspended: {
+                            type: 'boolean',
+                            required: false,
+                            input: true,
+                        },
+                        suspendedReason: {
+                            type: 'string',
+                            required: false,
+                            input: true,
+                        },
+                        suspendedUntil: {
+                            type: 'date',
+                            required: false,
+                            input: true,
+                        },
                         description: {
                             type: 'string',
                             required: true,

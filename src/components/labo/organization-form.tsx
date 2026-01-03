@@ -62,7 +62,8 @@ export function OrganizationForm() {
   const { user } = useAuth();
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       name: "",
       email: user?.email || "",
@@ -71,6 +72,7 @@ export function OrganizationForm() {
       phone: "",
       description: "",
       logoFile: [],
+      suspended: false,
     },
   });
 

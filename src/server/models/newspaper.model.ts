@@ -41,6 +41,7 @@ export interface NewspaperResponse {
     status: "published" | "draft" | "pending" | "archived";
     createdAt: Date;
     updatedAt?: Date;
+    salesCount?: number;
     categories?: {
         id: number;
         name: string;

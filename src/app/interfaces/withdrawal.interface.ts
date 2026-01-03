@@ -17,6 +17,11 @@ export interface WithdrawalResponse {
         name: string | null;
         email: string;
     } | null;
+    organization?: {
+        id: string;
+        name: string;
+        slug: string;
+    };
 }
 
 export interface CreateWithdrawalInput {

@@ -20,17 +20,7 @@ interface SiteBreadcrumbProps {
     items?: BreadcrumbSegment[];
 }
 
-const ROUTE_LABELS: Record<string, string> = {
-    newspapers: "Journaux",
-    magazines: "Magazines",
-    dashboard: "Tableau de bord",
-    partnership: "Partenariat",
-    login: "Connexion",
-    cart: "Panier",
-    "forgot-password": "Mot de passe oublié",
-    "reset-password": "Réinitialisation",
-    register: "Inscription",
-};
+import { ROUTE_LABELS } from "@/lib/route-labels";
 
 export function SiteBreadcrumb({ items }: SiteBreadcrumbProps) {
     const pathname = usePathname();

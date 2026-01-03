@@ -88,6 +88,26 @@ export class WithdrawalsController {
     }
 
     /**
+     * Get all withdrawals (admin)
+     */
+    static async getAll(
+        limit: number = 50,
+        offset: number = 0
+    ): Promise<WithdrawalResponse[]> {
+        const results = await db.query.withdrawals.findMany({
+            orderBy: [desc(withdrawals.requestedAt)],
+            limit,
+            offset,
+            with: {
+                user: true,
+                organization: true,
+            },
+        });
+
+        return results.map(this.formatWithdrawal);
+    }
+
+    /**
      * Get a withdrawal by ID
      */
     static async getById(id: number): Promise<WithdrawalResponse | null> {
@@ -193,6 +213,12 @@ export class WithdrawalsController {
                 name: withdrawal.user.name,
                 email: withdrawal.user.email,
             } : null,
+            // Include organization info if available (for admin view)
+            organization: withdrawal.organization ? {
+                id: withdrawal.organization.id,
+                name: withdrawal.organization.name,
+                slug: withdrawal.organization.slug,
+            } : undefined,
         };
     }
 }

@@ -33,7 +33,7 @@ export const organizationsService = new Elysia({ prefix: "/organizations" })
         async ({ body, set, user, request }) => {
             const userId = user.id;
 
-            const result = await OrganizationsController.create(body, userId, request.headers);
+            const result = await OrganizationsController.create({ ...body, suspended: false }, userId, request.headers);
             if ("status" in result) {
                 set.status = result.status;
             }

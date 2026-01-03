@@ -6,7 +6,7 @@ import {
     oneTapClient,
     organizationClient,
 } from "better-auth/client/plugins";
-import { ac, owner, admin, member, editor } from "./permissions";
+import { ac, owner, admin, member, editor, superadmin, moderator } from "./permissions";
 import { auth } from "./auth";
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -40,11 +40,19 @@ export const authClient = createAuthClient({
                 admin,
                 member,
                 editor,
+                
             },
         }),
 
         adminClient({
             ac,
+            roles: {
+                superadmin,
+                admin,
+                moderator,
+                editor,
+                member,
+            },
         }),
     ],
 });

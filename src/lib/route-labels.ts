@@ -1,0 +1,32 @@
+export const ROUTE_LABELS: Record<string, string> = {
+    newspapers: "Journaux",
+    magazines: "Magazines",
+    dashboard: "Tableau de bord",
+    partnership: "Partenariat",
+    login: "Connexion",
+    cart: "Panier",
+    "forgot-password": "Mot de passe oublié",
+    "reset-password": "Réinitialisation",
+    register: "Inscription",
+    // Admin routes
+    admin: "Administration",
+    home: "Tableau de bord",
+    organizations: "Organisations",
+    users: "Utilisateurs",
+    withdrawals: "Retraits",
+    orders: "Commandes",
+    settings: "Paramètres",
+    // Actions
+    create: "Création",
+    edit: "Édition",
+    new: "Nouveau",
+    // Labs/Others
+    labo: "Laboratoire",
+    accounting: "Comptabilité",
+    stats: "Statistiques",
+    overview: "Vue d'ensemble",
+    revenue: "Revenus",
+    favoris: "Mes favoris",
+    achats: "Mes achats",
+    profil: "Mon profil",
+};

@@ -5,6 +5,7 @@ import {
     categories,
     countries,
     uploads,
+    orders,
 } from "@/db/app-schema";
 import { organizations } from "@/db/auth-schema";
 import { eq, desc, and, sql, like, or } from "drizzle-orm";
@@ -350,6 +351,12 @@ export class NewspapersController {
                 pdf: newspapers.pdf,
                 status: newspapers.status,
                 autoPublish: newspapers.autoPublish,
+                salesCount: sql<number>`(
+                    SELECT COUNT(*) 
+                    FROM ${orders} 
+                    WHERE ${orders.newspaperId} = ${newspapers.id} 
+                    AND ${orders.status} = 'completed'
+                )`.mapWith(Number).as("salesCount"),
                 createdAt: newspapers.createdAt,
                 updatedAt: newspapers.updatedAt,
                 organization: {

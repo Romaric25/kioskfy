@@ -21,7 +21,7 @@ import { authClient, getErrorMessage } from "@/lib/auth-client";
 import { loginSchema, type LoginUser } from "@/server/models/user.model";
 import { Logo } from "@/components/ui/logo";
 
-export const LoginForm = () => {
+export const LoginForm = ({redirectDefault = "/dashboard"}: {redirectDefault?: string}) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +45,7 @@ export const LoginForm = () => {
       {
         email: data.email,
         password: data.password,
-        callbackURL: redirect || "/dashboard",
+        callbackURL: redirect || redirectDefault,
       },
       {
         onError: (ctx) => {

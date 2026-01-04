@@ -11,6 +11,7 @@ import { hashPassword, verifyPassword } from "./argon2";
 import { render } from "@react-email/components";
 import { ResetPasswordEmail } from "@/emails/resetPasswordEmail";
 import { sendEmail } from "@/lib/email";
+import { expo } from "@better-auth/expo";
 
 const isProduction = process.env.NODE_ENV === 'production';
 export const auth = betterAuth({
@@ -34,6 +35,12 @@ export const auth = betterAuth({
         "http://localhost:3000",
         "*.kioskfy.com",
         "https://*.kioskfy.com",
+        "kioskfy://",
+        ...(process.env.NODE_ENV === "development" ? [
+            "exp://",
+            "exp://**",
+            "exp://192.168.*.*:*/**",
+        ] : [])
     ],
     database: drizzleAdapter(db, {
         provider: "mysql",
@@ -156,6 +163,7 @@ export const auth = betterAuth({
     // plugins: [],
     plugins: [
         openAPI(),
+        expo(),
         nextCookies(),
         organization({
             teams: {

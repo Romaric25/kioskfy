@@ -13,9 +13,8 @@ import { ResetPasswordEmail } from "@/emails/resetPasswordEmail";
 import { sendEmail } from "@/lib/email";
 import { expo } from "@better-auth/expo";
 
-const isProduction = process.env.NODE_ENV === 'production';
 export const auth = betterAuth({
-    baseURL: isProduction ? (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000") : "http://localhost:3000",
+    baseURL: process.env.NEXT_PUBLIC_APP_URL,
     basePath: '/api/auth',
     socialProviders: {
         google: {
@@ -36,11 +35,9 @@ export const auth = betterAuth({
         "*.kioskfy.com",
         "https://*.kioskfy.com",
         "kioskfy://",
-        ...(process.env.NODE_ENV === "development" ? [
-            "exp://",
-            "exp://**",
-            "exp://192.168.*.*:*/**",
-        ] : [])
+        "exp://",
+        "exp://**",
+        "exp://192.168.*.*:*/**",
     ],
     database: drizzleAdapter(db, {
         provider: "mysql",
@@ -303,7 +300,7 @@ export const auth = betterAuth({
             ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
             disableIpTracking: false
         },
-        
+
     }
 });
 

@@ -26,7 +26,8 @@ export function AllCommunContent({
     type = "Journal",
 }: AllCommunContentProps) {
     const searchParams = useSearchParams();
-    const search = searchParams.get("q") || undefined;
+    const searchParam = searchParams.get("q") || undefined;
+    const search = searchParam && searchParam.length >= 3 ? searchParam : undefined;
 
     console.log("AllCommunContent search:", search);
 

@@ -18,7 +18,7 @@ export function SearchBar({ className, inputClassName, placeholder = "Rechercher
     const router = useRouter();
     const searchParams = useSearchParams();
     const timeoutRef = useRef<NodeJS.Timeout>(null);
-    const paths = ["/newspapers", "/magazines", "/categories"];
+    const paths = ["/newspapers", "/magazines", "/categories", "/countries"];
 
     const shouldShow = paths.some((path) => pathname?.startsWith(path));
 

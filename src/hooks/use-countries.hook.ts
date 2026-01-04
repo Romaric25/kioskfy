@@ -10,3 +10,14 @@ export const useCountries = () => {
     const countries = data?.data;
     return { countries, countriesLoading, countriesError }
 }
+
+// Hook for single country by slug
+export const useCountryBySlug = (slug: string) => {
+    const { data, isLoading: countryLoading, error: countryError } = useQuery({
+        queryKey: ['country', slug],
+        queryFn: () => client.api.v1.countries.slug({ slug }).get(),
+        enabled: !!slug,
+    })
+    const country = data?.data && 'data' in data.data ? data.data.data : undefined;
+    return { country, countryLoading, countryError }
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useInfiniteNewspapersByCategory } from "@/hooks/use-newspapers.hook";
-import { useCategoryBySlug } from "@/hooks/use-categories.hook";
+import { useInfiniteNewspapersByCountrySlug } from "@/hooks/use-newspapers.hook";
+import { useCountryBySlug } from "@/hooks/use-countries.hook";
 import { NewspaperCard } from "@/components/newspaper-card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Newspaper, ArrowLeft } from "lucide-react";
@@ -9,17 +9,18 @@ import { useEffect, useRef, useCallback } from "react";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 import Link from "next/link";
 import { NewspaperCardSkeleton } from "@/components/skeletons/newspaper-card-skeleton";
-import { CategoriesSection } from "../categories-section";
+import { CategoriesSection } from "@/components/categories-section";
+import Image from "next/image";
 import { SearchBar } from "@/components/search-bar";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-interface CategoryPageClientProps {
+interface CountryPageClientProps {
     slug: string;
 }
 
-export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
-    const { category, categoryLoading } = useCategoryBySlug(slug);
+export const CountryPage = ({ slug }: CountryPageClientProps) => {
+    const { country, countryLoading } = useCountryBySlug(slug);
     const searchParams = useSearchParams();
     const searchParam = searchParams?.get("q") || undefined;
     const search = searchParam && searchParam.length >= 3 ? searchParam : undefined;
@@ -31,7 +32,7 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
         isFetchingNextPage,
         isLoading,
         isError,
-    } = useInfiniteNewspapersByCategory(slug, { limit: 12, search });
+    } = useInfiniteNewspapersByCountrySlug(slug, { limit: 12, search });
 
     // Infinite scroll observer
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -60,9 +61,9 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
     }, [handleObserver]);
 
     const newspapers = data?.pages.flatMap((page) => page.data) ?? [];
-    const categoryInfo = data?.pages[0]?.category;
+    const countryInfo = data?.pages[0]?.country;
 
-    if (categoryLoading || isLoading) {
+    if (countryLoading || isLoading) {
         return (
             <div className="container mx-auto py-8 px-4">
                 <div className="mb-8">
@@ -95,13 +96,14 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
         );
     }
 
-    const displayName = category?.name || categoryInfo?.name || slug;
+    const displayName = country?.name || countryInfo?.name || slug;
+    const flag = country?.flag || countryInfo?.flag;
 
     return (
         <div className="container mx-auto py-8 px-4">
             <SiteBreadcrumb
                 items={[
-                    { label: "Catégories", href: "/" },
+                    { label: "Pays", href: "/" },
                     { label: displayName },
                 ]}
             />
@@ -118,16 +120,26 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
                     </Suspense>
                 </div>
             </section>
+
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-8 mt-6">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="h-8 w-1 bg-gradient-to-b from-primary to-primary/50 rounded-full" />
+                    {flag && (
+                        <div className="relative h-8 w-8 rounded-full overflow-hidden border border-border">
+                            <Image
+                                src={flag}
+                                alt={`Drapeau ${displayName}`}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                    )}
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                         {displayName}
                     </h1>
                 </div>
                 <p className="text-muted-foreground ml-4 pl-3 border-l border-border">
-                    Découvrez tous les journaux et magazines de la catégorie {displayName.toLowerCase()}
+                    Découvrez tous les journaux et magazines publiés au {displayName}
                 </p>
             </div>
 
@@ -141,10 +153,10 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
                         Aucun journal trouvé
                     </h2>
                     <p className="text-muted-foreground mb-8 max-w-md">
-                        Il n'y a pas encore de journaux dans cette catégorie.
+                        Il n'y a pas encore de journaux pour ce pays.
                     </p>
                     <Button asChild>
-                        <Link href="/">Découvrir d'autres catégories</Link>
+                        <Link href="/">Découvrir d'autres pays</Link>
                     </Button>
                 </div>
             ) : (
@@ -165,7 +177,7 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
                         )}
                         {!hasNextPage && newspapers.length > 0 && (
                             <p className="text-muted-foreground text-sm">
-                                Vous avez vu tous les journaux de cette catégorie
+                                Vous avez vu tous les journaux de ce pays
                             </p>
                         )}
                     </div>
@@ -173,4 +185,4 @@ export const CategoryPage = ({ slug }: CategoryPageClientProps) => {
             )}
         </div>
     );
-}
+};

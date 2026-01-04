@@ -559,9 +559,9 @@ export class NewspapersController {
     // Get newspapers by category slug (with pagination)
     static async getByCategory(
         categorySlug: string,
-        options: { limit?: number; cursor?: number } = {}
+        options: { limit?: number; cursor?: number; search?: string } = {}
     ) {
-        const { limit = 12, cursor = 0 } = options;
+        const { limit = 12, cursor = 0, search } = options;
 
         // First, get the category by slug
         const categoryResult = await db
@@ -632,7 +632,11 @@ export class NewspapersController {
                 and(
                     sql`${newspapers.id} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`,
                     eq(newspapers.status, Status.PUBLISHED),
-                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    search ? or(
+                        like(organizations.name, `%${search}%`),
+                        like(newspapers.issueNumber, `%${search}%`)
+                    ) : undefined
                 )
             )
             .orderBy(desc(newspapers.publishDate))
@@ -669,6 +673,115 @@ export class NewspapersController {
             success: true,
             data: newspapersWithCategories,
             category: { id: categoryId, name: categoryName, slug: categorySlug },
+            nextCursor: hasMore ? cursor + limit : undefined,
+            total: newspapersWithCategories.length,
+        };
+    }
+
+    // Get newspapers by country slug (with pagination)
+    static async getByCountrySlug(
+        countrySlug: string,
+        options: { limit?: number; cursor?: number; search?: string } = {}
+    ) {
+        const { limit = 12, cursor = 0, search } = options;
+
+        // First, get the country by slug
+        const countryResult = await db
+            .select({
+                id: countries.id,
+                name: countries.name,
+                slug: countries.slug,
+                flag: countries.flag
+            })
+            .from(countries)
+            .where(eq(countries.slug, countrySlug))
+            .limit(1);
+
+        if (countryResult.length === 0) {
+            return {
+                success: false,
+                status: 404,
+                error: "Pays non trouvé",
+            };
+        }
+
+        const countryId = countryResult[0].id;
+        const countryData = countryResult[0];
+
+        // Fetch newspapers with all relations
+        const countryNewspapers = await db
+            .select({
+                id: newspapers.id,
+                coverImage: newspapers.coverImage,
+                price: newspapers.price,
+                publishDate: newspapers.publishDate,
+                issueNumber: newspapers.issueNumber,
+                status: newspapers.status,
+                createdAt: newspapers.createdAt,
+                organization: {
+                    id: organizations.id,
+                    name: organizations.name,
+                    slug: organizations.slug,
+                    logo: organizations.logo,
+                    metadata: organizations.metadata,
+                },
+                country: {
+                    id: countries.id,
+                    name: countries.name,
+                    slug: countries.slug,
+                    flag: countries.flag,
+                    code: countries.code,
+                    currency: countries.currency,
+                },
+            })
+            .from(newspapers)
+            .leftJoin(organizations, eq(newspapers.organizationId, organizations.id))
+            .leftJoin(countries, eq(newspapers.countryId, countries.id))
+            .where(
+                and(
+                    eq(newspapers.countryId, countryId),
+                    eq(newspapers.status, Status.PUBLISHED),
+                    sql`JSON_EXTRACT(${organizations.metadata}, '$.isActive') = true`,
+                    search ? or(
+                        like(organizations.name, `%${search}%`),
+                        like(newspapers.issueNumber, `%${search}%`)
+                    ) : undefined
+                )
+            )
+            .orderBy(desc(newspapers.publishDate))
+            .limit(limit + 1)
+            .offset(cursor);
+
+        // Check if there are more items
+        const hasMore = countryNewspapers.length > limit;
+        const dataSlice = hasMore ? countryNewspapers.slice(0, limit) : countryNewspapers;
+
+        // Fetch categories for each newspaper
+        const newspapersWithCategories = await Promise.all(
+            dataSlice.map(async (newspaper) => {
+                const newspaperCategories = await db
+                    .select({
+                        id: categories.id,
+                        name: categories.name,
+                        slug: categories.slug,
+                        icon: categories.icon,
+                        color: categories.color,
+                    })
+                    .from(newspapersCategories)
+                    .innerJoin(categories, eq(newspapersCategories.categoriesId, categories.id))
+                    .where(eq(newspapersCategories.newspapersId, newspaper.id));
+
+                return {
+                    ...newspaper,
+                    categories: newspaperCategories,
+                };
+            })
+        );
+
+        return {
+            success: true,
+            data: newspapersWithCategories,
+            country: countryData,
             nextCursor: hasMore ? cursor + limit : undefined,
             total: newspapersWithCategories.length,
         };

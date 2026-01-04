@@ -140,11 +140,47 @@ export const useInfiniteNewspapersByOrganization = (
 export const useNewspapersByCountry = (countryId: number) => {
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
         queryKey: ['newspapers-country', countryId],
-        queryFn: () => client.api.v1.newspapers.country({ countryId: countryId.toString() }).get(),
+        // @ts-expect-error - Treaty merges params for conflicting routes
+        queryFn: () => client.api.v1.newspapers.country({ countryId: countryId, slug: "" }).get(),
         enabled: !!countryId,
     })
     const newspapers = data?.data;
     return { newspapers, newspapersLoading, newspapersError }
+}
+
+// Response type for paginated country newspapers
+interface PaginatedCountryResponse {
+    success: boolean;
+    data: NewspaperResponse[];
+    country?: { id: number; name: string; slug: string; flag: string };
+    nextCursor?: number;
+    total: number;
+}
+
+// Hook for infinite scroll newspapers by country slug
+export const useInfiniteNewspapersByCountrySlug = (
+    countrySlug: string,
+    options: { limit?: number; search?: string } = {}
+) => {
+    const { limit = 12, search } = options;
+
+    return useInfiniteQuery({
+        queryKey: ['newspapers-country-slug-infinite', countrySlug, search],
+        queryFn: async ({ pageParam = 0 }) => {
+            // @ts-expect-error - Treaty merges params for conflicting routes
+            const response = await client.api.v1.newspapers.country({ slug: countrySlug, countryId: 0 }).get({
+                query: {
+                    cursor: pageParam.toString(),
+                    limit: limit.toString(),
+                    search,
+                },
+            });
+            return response.data as PaginatedCountryResponse;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
+        enabled: !!countrySlug,
+    });
 }
 
 // Response type for paginated category newspapers
@@ -159,17 +195,18 @@ interface PaginatedCategoryResponse {
 // Hook for infinite scroll newspapers by category
 export const useInfiniteNewspapersByCategory = (
     categorySlug: string,
-    options: { limit?: number } = {}
+    options: { limit?: number; search?: string } = {}
 ) => {
-    const { limit = 12 } = options;
+    const { limit = 12, search } = options;
 
     return useInfiniteQuery({
-        queryKey: ['newspapers-category-infinite', categorySlug],
+        queryKey: ['newspapers-category-infinite', categorySlug, search],
         queryFn: async ({ pageParam = 0 }) => {
             const response = await client.api.v1.newspapers.category({ slug: categorySlug }).get({
                 query: {
                     cursor: pageParam.toString(),
                     limit: limit.toString(),
+                    search,
                 },
             });
             return response.data as PaginatedCategoryResponse;

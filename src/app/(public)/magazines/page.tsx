@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { SiteBreadcrumb } from "@/components/site-breadcrumb";
 import { GridSkeleton } from "@/components/ui/loading";
+import { SearchBar } from "@/components/search-bar";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -87,8 +88,11 @@ export default function MagazinesPage() {
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
                 <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl translate-y-1/2" />
 
-                <div className="relative container mx-auto px-4 py-4 md:py-6">
+                <div className="relative container mx-auto px-4 py-4 md:py-6 flex flex-col items-start gap-6">
                     <CategoriesSection />
+                    <Suspense>
+                        <SearchBar className="w-full max-w-md" />
+                    </Suspense>
                 </div>
             </section>
 

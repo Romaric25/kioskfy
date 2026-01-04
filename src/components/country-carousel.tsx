@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Autoplay from "embla-carousel-autoplay";
+import Link from "next/link";
 import { useCountries } from "@/hooks/use-countries.hook";
 import {
   Carousel,
@@ -36,7 +37,7 @@ export function CountryCarousel() {
           </p>
         </div>
 
-        <div className="relative px-4">
+        <div className="relative px-4 group/carousel">
           <Carousel
             plugins={[plugin.current]}
             className="w-full max-w-6xl mx-auto"
@@ -51,7 +52,10 @@ export function CountryCarousel() {
                   key={index}
                   className="pl-2 md:pl-4 basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
-                  <div className="group relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-all duration-300 cursor-pointer border border-transparent hover:border-border/50">
+                  <Link
+                    href={`/countries/${country.slug}`}
+                    className="group relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-all duration-300 cursor-pointer border border-transparent hover:border-border/50"
+                  >
 
                     {/* Drapeau Circulaire avec effet de ring */}
                     <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-full overflow-hidden shadow-sm ring-2 ring-border group-hover:ring-primary group-hover:scale-110 transition-all duration-300">
@@ -73,13 +77,14 @@ export function CountryCarousel() {
                       </span>
                     </div>
 
-                  </div>
+                  </Link>
                 </CarouselItem>
               ))}
             </CarouselContent>
 
             {/* Custom Navigation buttons that appear on hover */}
-            <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="hidden md:block opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300">
+
               <CarouselPrevious className="absolute -left-4 md:-left-12 h-10 w-10 border-none bg-background/80 hover:bg-background shadow-md backdrop-blur-sm" />
               <CarouselNext className="absolute -right-4 md:-right-12 h-10 w-10 border-none bg-background/80 hover:bg-background shadow-md backdrop-blur-sm" />
             </div>

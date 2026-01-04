@@ -197,15 +197,17 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
-    // Get newspapers by category slug (with pagination)
+    // Get newspapers by country slug (with pagination)
     .get(
-        "/category/:slug",
+        "/country/:slug",
         async ({ params: { slug }, query, set }) => {
             const limit = query.limit ? parseInt(query.limit) : 12;
             const cursor = query.cursor ? parseInt(query.cursor) : 0;
-            const result = await NewspapersController.getByCategory(slug, {
+            const search = query.search;
+            const result = await NewspapersController.getByCountrySlug(slug, {
                 limit,
                 cursor,
+                search,
             });
             if (!result.success && "status" in result) {
                 set.status = result.status;
@@ -219,6 +221,40 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             query: t.Object({
                 limit: t.Optional(t.String()),
                 cursor: t.Optional(t.String()),
+                search: t.Optional(t.String()),
+            }),
+            detail: {
+                tags: ["Public"],
+                summary: "Récupérer les journaux d'un pays par slug (paginé)",
+                description: "Retourne les journaux publiés d'un pays avec pagination pour le défilement infini",
+            },
+        }
+    )
+    // Get newspapers by category slug (with pagination)
+    .get(
+        "/category/:slug",
+        async ({ params: { slug }, query, set }) => {
+            const limit = query.limit ? parseInt(query.limit) : 12;
+            const cursor = query.cursor ? parseInt(query.cursor) : 0;
+            const search = query.search;
+            const result = await NewspapersController.getByCategory(slug, {
+                limit,
+                cursor,
+                search,
+            });
+            if (!result.success && "status" in result) {
+                set.status = result.status;
+            }
+            return result;
+        },
+        {
+            params: t.Object({
+                slug: t.String({ minLength: 1 }),
+            }),
+            query: t.Object({
+                limit: t.Optional(t.String()),
+                cursor: t.Optional(t.String()),
+                search: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Public"],

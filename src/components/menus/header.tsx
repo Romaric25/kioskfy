@@ -91,14 +91,6 @@ export function Header() {
 
             {/* Actions area */}
             <div className="flex items-center gap-2 sm:gap-4">
-              {/* Search Desktop */}
-              <Suspense fallback={<Skeleton className="hidden lg:block w-64 h-10 rounded-full" />}>
-                <SearchBar
-                  className="hidden lg:block w-full max-w-xs"
-                  inputClassName="w-64 focus-visible:w-72"
-                />
-              </Suspense>
-
               {/* Partner Button - Premium Gold Style */}
               <Button
                 variant="outline"

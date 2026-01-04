@@ -180,23 +180,7 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             },
         }
     )
-    // Get newspapers by country
-    .get(
-        "/country/:countryId",
-        async ({ params: { countryId } }) => {
-            return await NewspapersController.getByCountry(countryId);
-        },
-        {
-            params: t.Object({
-                countryId: t.Numeric(),
-            }),
-            detail: {
-                tags: ["Public"],
-                summary: "Récupérer les journaux d'un pays",
-                description: "Retourne tous les journaux publiés d'un pays spécifique",
-            },
-        }
-    )
+
     // Get newspapers by country slug (with pagination)
     .get(
         "/country/:slug",

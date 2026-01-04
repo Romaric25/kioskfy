@@ -136,17 +136,6 @@ export const useInfiniteNewspapersByOrganization = (
     });
 }
 
-// Hook for newspapers by country
-export const useNewspapersByCountry = (countryId: number) => {
-    const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
-        queryKey: ['newspapers-country', countryId],
-        // @ts-expect-error - Treaty merges params for conflicting routes
-        queryFn: () => client.api.v1.newspapers.country({ countryId: countryId, slug: "" }).get(),
-        enabled: !!countryId,
-    })
-    const newspapers = data?.data;
-    return { newspapers, newspapersLoading, newspapersError }
-}
 
 // Response type for paginated country newspapers
 interface PaginatedCountryResponse {
@@ -167,15 +156,14 @@ export const useInfiniteNewspapersByCountrySlug = (
     return useInfiniteQuery({
         queryKey: ['newspapers-country-slug-infinite', countrySlug, search],
         queryFn: async ({ pageParam = 0 }) => {
-            // @ts-expect-error - Treaty merges params for conflicting routes
-            const response = await client.api.v1.newspapers.country({ slug: countrySlug, countryId: 0 }).get({
+            const response = await client.api.v1.newspapers.country({ slug: countrySlug, countryId: 0 } as any).get({
                 query: {
                     cursor: pageParam.toString(),
                     limit: limit.toString(),
                     search,
                 },
             });
-            return response.data as PaginatedCountryResponse;
+            return (response as any).data as PaginatedCountryResponse;
         },
         initialPageParam: 0,
         getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,

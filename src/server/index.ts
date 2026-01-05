@@ -28,10 +28,11 @@ const app = new Elysia({ prefix: '/api/v1' })
     // Configure CORS for auth requests
     .use(
         cors({
-            origin: [
-                /.*\.kioskfy\.com$/,
-                /.*\.localhost$/,
-            ],
+            origin: isProduction
+                ? [
+                    /.*\.kioskfy\.com$/,
+                ]
+                : true, // Allow all in dev (mobile app needs this)
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             credentials: true,
             allowedHeaders: ['Content-Type', 'Authorization'],

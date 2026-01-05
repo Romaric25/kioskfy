@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useTransition } from "react";
 
 interface SearchBarProps {
     className?: string;
@@ -18,6 +18,7 @@ export function SearchBar({ className, inputClassName, placeholder = "Rechercher
     const router = useRouter();
     const searchParams = useSearchParams();
     const timeoutRef = useRef<NodeJS.Timeout>(null);
+    const [isPending, startTransition] = useTransition();
     const paths = ["/newspapers", "/magazines", "/categories", "/countries"];
 
     const shouldShow = paths.some((path) => pathname?.startsWith(path));
@@ -28,13 +29,15 @@ export function SearchBar({ className, inputClassName, placeholder = "Rechercher
         }
 
         timeoutRef.current = setTimeout(() => {
-            const params = new URLSearchParams(searchParams);
-            if (term) {
-                params.set("q", term);
-            } else {
-                params.delete("q");
-            }
-            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+            startTransition(() => {
+                const params = new URLSearchParams(searchParams);
+                if (term) {
+                    params.set("q", term);
+                } else {
+                    params.delete("q");
+                }
+                router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+            });
         }, 300);
     };
 

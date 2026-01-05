@@ -156,14 +156,14 @@ export const useInfiniteNewspapersByCountrySlug = (
     return useInfiniteQuery({
         queryKey: ['newspapers-country-slug-infinite', countrySlug, search],
         queryFn: async ({ pageParam = 0 }) => {
-            const response = await client.api.v1.newspapers.country({ slug: countrySlug, countryId: 0 } as any).get({
+            const response = await client.api.v1.newspapers.country({ slug: countrySlug }).get({
                 query: {
                     cursor: pageParam.toString(),
                     limit: limit.toString(),
-                    search,
+                    ...(search ? { search } : {}),
                 },
             });
-            return (response as any).data as PaginatedCountryResponse;
+            return response.data as PaginatedCountryResponse;
         },
         initialPageParam: 0,
         getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,

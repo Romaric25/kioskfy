@@ -79,7 +79,7 @@ export function NewspapersList() {
 
     // Extract organization ID from Better-Auth's organization structure
     const organizationId = organisation?.data?.id?.toString() || "";
-    const { newspapers, newspapersLoading } = useNewspapersByOrganization(organizationId);
+    const { newspapers, newspapersLoading } = useNewspapersByOrganization(organizationId, { includeAllStatuses: true });
     const { updateNewspaper, isUpdatingNewspaper, isUpdatingNewspaperSuccess } =
         useUpdateNewspaper();
     const { updateNewspaperStatus, isUpdatingNewspaperStatus, isUpdatingNewspaperStatusSuccess } =

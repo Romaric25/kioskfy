@@ -93,10 +93,18 @@ export const useNewspaper = (id: string) => {
 }
 
 // Hook for newspapers by organization (simple, non-paginated - kept for backward compatibility)
-export const useNewspapersByOrganization = (organizationId: string) => {
+export const useNewspapersByOrganization = (
+    organizationId: string,
+    options: { includeAllStatuses?: boolean } = {}
+) => {
+    const { includeAllStatuses = false } = options;
     const { data, isLoading: newspapersLoading, error: newspapersError } = useQuery({
-        queryKey: ['newspapers-organization', organizationId],
-        queryFn: () => client.api.v1.newspapers.organization({ organizationId }).get(),
+        queryKey: ['newspapers-organization', organizationId, includeAllStatuses],
+        queryFn: () => client.api.v1.newspapers.organization({ organizationId }).get({
+            query: {
+                includeAllStatuses: includeAllStatuses ? "true" : undefined,
+            },
+        }),
         enabled: !!organizationId,
     })
     const newspapers = data?.data;

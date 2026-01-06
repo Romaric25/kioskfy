@@ -459,9 +459,9 @@ export class NewspapersController {
     // Get newspapers by organization ID (with pagination)
     static async getByOrganization(
         organizationId: string,
-        options: { limit?: number; cursor?: number; excludeId?: string } = {}
+        options: { limit?: number; cursor?: number; excludeId?: string; includeAllStatuses?: boolean } = {}
     ) {
-        const { limit = 6, cursor = 0, excludeId } = options;
+        const { limit = 6, cursor = 0, excludeId, includeAllStatuses = false } = options;
 
         // Fetch one extra to determine if there are more items
         const orgNewspapers = await db
@@ -498,12 +498,12 @@ export class NewspapersController {
                 excludeId
                     ? and(
                         eq(newspapers.organizationId, organizationId),
-                        eq(newspapers.status, Status.PUBLISHED),
+                        includeAllStatuses ? undefined : eq(newspapers.status, Status.PUBLISHED),
                         sql`${newspapers.id} != ${excludeId}`
                     )
                     : and(
                         eq(newspapers.organizationId, organizationId),
-                        eq(newspapers.status, Status.PUBLISHED)
+                        includeAllStatuses ? undefined : eq(newspapers.status, Status.PUBLISHED)
                     )
             )
             .orderBy(desc(newspapers.publishDate))

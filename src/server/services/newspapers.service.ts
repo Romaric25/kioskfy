@@ -158,10 +158,12 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
             const limit = query.limit ? parseInt(query.limit) : 6;
             const cursor = query.cursor ? parseInt(query.cursor) : 0;
             const excludeId = query.excludeId;
+            const includeAllStatuses = query.includeAllStatuses === "true";
             return await NewspapersController.getByOrganization(organizationId, {
                 limit,
                 cursor,
                 excludeId,
+                includeAllStatuses,
             });
         },
         {
@@ -172,11 +174,12 @@ export const newspapersService = new Elysia({ prefix: "/newspapers" })
                 limit: t.Optional(t.String()),
                 cursor: t.Optional(t.String()),
                 excludeId: t.Optional(t.String()),
+                includeAllStatuses: t.Optional(t.String()),
             }),
             detail: {
                 tags: ["Public"],
                 summary: "Récupérer les journaux d'une organisation (paginé)",
-                description: "Retourne les journaux publiés d'une organisation avec pagination pour le défilement infini",
+                description: "Retourne les journaux d'une organisation avec pagination. Utilisez includeAllStatuses=true pour inclure tous les statuts (brouillons, publiés, archivés)",
             },
         }
     )

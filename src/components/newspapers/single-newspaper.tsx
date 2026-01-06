@@ -61,6 +61,7 @@ export const SingleNewspaper = () => {
     const toggleFavorite = useToggleFavorite();
 
     const [currentUrl, setCurrentUrl] = useState("");
+    console.log(currentUrl);
 
     useEffect(() => {
         setCurrentUrl(window.location.href);

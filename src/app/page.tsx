@@ -11,7 +11,7 @@ import { Metadata } from 'next';
 import { CountriesController } from '@/server/controllers/countries.controller';
 import { OrganizationsController } from '@/server/controllers/organizations.controller';
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kioskfy.com";
+const baseUrl = "https://kioskfy.com";
 
 export async function generateMetadata(): Promise<Metadata> {
     const [{ data: countries = [] }, { data: organizations = [] }] = await Promise.all([

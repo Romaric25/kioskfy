@@ -35,7 +35,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     const title = `${orgName} - ${item.issueNumber}`;
     const description = `Lisez le numéro ${item.issueNumber} du ${orgName} (${countryName}) paru le ${publishDate}. Disponible en lecture numérique immédiate sur kioskfy.`;
 
-    const images = item.coverImage ? [item.coverImage] : ["/og-image.jpg"];
+    // Facebook requires absolute URLs for og:image
+    const getAbsoluteUrl = (url: string) => {
+        if (!url) return `${baseUrl}/og-image.jpg`;
+        if (url.startsWith('http')) return url;
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+    const ogImage = getAbsoluteUrl(item.coverImage);
 
     return {
         title,
@@ -57,7 +63,14 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description,
             siteName: "kioskfy",
             url: `${baseUrl}/newspapers/${id}`,
-            images,
+            images: [
+                {
+                    url: ogImage,
+                    width: 1200,
+                    height: 630,
+                    alt: title,
+                }
+            ],
             type: "article",
             publishedTime: item.publishDate.toISOString(),
             section: "Presse",
@@ -69,7 +82,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             title,
             creator: "@kioskfy",
             description,
-            images,
+            images: [ogImage],
         },
         robots: {
             index: true,

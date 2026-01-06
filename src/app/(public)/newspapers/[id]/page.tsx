@@ -9,7 +9,7 @@ import {
     generateBreadcrumbSchema,
 } from "@/components/seo/json-ld";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kioskfy.com";
+const baseUrl = "https://kioskfy.com";
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const params = await props.params;
@@ -36,12 +36,12 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     const description = `Lisez le numéro ${item.issueNumber} du ${orgName} (${countryName}) paru le ${publishDate}. Disponible en lecture numérique immédiate sur kioskfy.`;
 
     // Facebook requires absolute URLs for og:image
-    const getAbsoluteUrl = (url: string) => {
-        if (!url) return `${baseUrl}/og-image.jpg`;
-        if (url.startsWith('http')) return url;
-        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
-    const ogImage = getAbsoluteUrl(item.coverImage);
+    const coverUrl = item.coverImage;
+    const ogImage = !coverUrl
+        ? `${baseUrl}/og-image.jpg`
+        : coverUrl.startsWith('http')
+            ? coverUrl
+            : `${baseUrl}${coverUrl.startsWith('/') ? '' : '/'}${coverUrl}`;
 
     return {
         title,

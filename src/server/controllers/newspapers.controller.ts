@@ -834,8 +834,12 @@ export class NewspapersController {
             if (coverImageUploadId) {
                 const upload = await UploadsController.getById(coverImageUploadId);
                 if (upload.success && upload.data) {
-                    // Use the thumbnail URL if available
-                    coverImageUrl = upload.data.thumbnailUrl;
+                    // Use the main URL (larger image) for better social media sharing
+                    // The thumbnail is too small for Facebook's og:image requirements (min 200x200)
+                    const s3Key = upload.data.thumbnailS3Key;
+                    // Reconstruct main URL from s3Key (removing thumbnail path if present)
+                    const mainS3Key = s3Key.replace('/thumbnails/', '/').replace('-thumb.webp', '.webp');
+                    coverImageUrl = `${process.env.R2_PUBLIC_URL}/${mainS3Key}`;
                 }
             }
             // Fallback: Handle cover image upload via file

@@ -9,7 +9,7 @@ import {
     generateBreadcrumbSchema,
 } from "@/components/seo/json-ld";
 
-const baseUrl = "https://kioskfy.com";
+const baseUrl = "https://www.kioskfy.com";
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const params = await props.params;
@@ -35,15 +35,20 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     const title = `${orgName} - ${item.issueNumber}`;
     const description = `Lisez le numéro ${item.issueNumber} du ${orgName} (${countryName}) paru le ${publishDate}. Disponible en lecture numérique immédiate sur kioskfy.`;
 
-    // Facebook requires absolute URLs for og:image
-    const coverUrl = item.coverImage;
-    console.log('[OG Debug] coverImage:', coverUrl, 'for newspaper:', id);
+    // Facebook requires absolute URLs for og:image (minimum 200x200px)
+    // Convert thumbnail URLs to main image URLs for better social sharing
+    let coverUrl = item.coverImage;
+    if (coverUrl) {
+        // Transform thumbnail path to main image path if it's a thumbnail
+        coverUrl = coverUrl
+            .replace('/thumbnails/', '/')
+            .replace('-thumb.webp', '.webp');
+    }
     const ogImage = !coverUrl
         ? `${baseUrl}/og-image.jpg`
         : coverUrl.startsWith('http')
             ? coverUrl
             : `${baseUrl}${coverUrl.startsWith('/') ? '' : '/'}${coverUrl}`;
-    console.log('[OG Debug] final ogImage:', ogImage);
 
     return {
         title,

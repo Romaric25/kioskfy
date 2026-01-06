@@ -37,11 +37,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
     // Facebook requires absolute URLs for og:image
     const coverUrl = item.coverImage;
+    console.log('[OG Debug] coverImage:', coverUrl, 'for newspaper:', id);
     const ogImage = !coverUrl
         ? `${baseUrl}/og-image.jpg`
         : coverUrl.startsWith('http')
             ? coverUrl
             : `${baseUrl}${coverUrl.startsWith('/') ? '' : '/'}${coverUrl}`;
+    console.log('[OG Debug] final ogImage:', ogImage);
 
     return {
         title,

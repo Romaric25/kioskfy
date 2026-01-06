@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { OverviewCards } from "./overview-cards";
 import { RecentSales } from "./recent-sales";
 import { ChartAreaInteractive } from "./chart-area-interactive";
-import { useActiveOrganization, useOrganization } from "@/hooks/use-organizations.hook";
+import { CustomersTable } from "./customers-table";
+import { useActiveOrganization } from "@/hooks/use-organizations.hook";
 
 import { OrganizationHomeSkeleton } from "./skeleton/organization-home-skeleton";
 
@@ -48,8 +49,11 @@ export const OrganizationHome = () => {
               </CardContent>
             </Card>
           </div>
+          {/* Table des lecteurs */}
+          <CustomersTable organizationId={organisation.data.id} />
         </div>
       )}
     </>
   );
 }
+

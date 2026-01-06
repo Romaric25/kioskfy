@@ -56,9 +56,6 @@ export function RecentSales({ organizationId }: RecentSalesProps) {
                             {sale.user?.name || "Utilisateur inconnu"}
                         </p>
                         <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">
-                                {sale.user?.email || "Email inconnu"}
-                            </p>
                             {sale.newspaper && (
                                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted">
                                     {sale.newspaper.issueNumber}

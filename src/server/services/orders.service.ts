@@ -270,4 +270,39 @@ export const ordersService = new Elysia({ prefix: "/orders" })
                 description: "Get revenue and recent sales for an organization",
             },
         }
+    )
+
+    /**
+     * GET /orders/organization/:organizationId/customers
+     * Get organization customers with their purchase counts
+     */
+    .get(
+        "/organization/:organizationId/customers",
+        async ({ params, set }) => {
+            try {
+                const customers = await OrdersController.getOrganizationCustomers(params.organizationId);
+
+                return {
+                    success: true,
+                    data: customers,
+                };
+            } catch (error: any) {
+                set.status = 500;
+                return {
+                    success: false,
+                    message: error.message || "Failed to fetch organization customers",
+                };
+            }
+        },
+        {
+            auth: true,
+            params: t.Object({
+                organizationId: t.String(),
+            }),
+            detail: {
+                tags: ["Orders"],
+                summary: "Get organization customers",
+                description: "Get unique customers who have purchased from this organization with their total purchase count",
+            },
+        }
     );

@@ -389,4 +389,41 @@ export class OrdersController {
             }))
         };
     }
+
+    /**
+     * Get unique customers who have purchased newspapers from an organization
+     * Returns customer info with their total purchase count
+     */
+    static async getOrganizationCustomers(organizationId: string) {
+        // Get all completed orders for newspapers belonging to this organization
+        const customerOrders = await db
+            .select({
+                userId: orders.userId,
+                userName: users.name,
+                userEmail: users.email,
+                userImage: users.image,
+                purchaseCount: count(orders.id),
+            })
+            .from(orders)
+            .innerJoin(newspapers, eq(orders.newspaperId, newspapers.id))
+            .innerJoin(users, eq(orders.userId, users.id))
+            .where(
+                and(
+                    eq(newspapers.organizationId, organizationId),
+                    eq(orders.status, "completed")
+                )
+            )
+            .groupBy(orders.userId, users.name, users.email, users.image);
+
+        return {
+            totalCustomers: customerOrders.length,
+            customers: customerOrders.map(customer => ({
+                id: customer.userId,
+                name: customer.userName,
+                email: customer.userEmail,
+                image: customer.userImage,
+                purchaseCount: Number(customer.purchaseCount),
+            })),
+        };
+    }
 }

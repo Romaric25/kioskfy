@@ -100,6 +100,7 @@ const nextConfig: NextConfig = {
     const laboHost = laboUrl ? new URL(laboUrl).hostname : "labo.kioskfy.com";
 
     return [
+      // Sur admin.kioskfy.com, le rewrite transforme /login -> /admin/login
       {
         source: "/",
         has: [
@@ -108,9 +109,10 @@ const nextConfig: NextConfig = {
             value: adminHost,
           },
         ],
-        destination: "/admin/login",
-        permanent: true,
+        destination: "/login",
+        permanent: false, // Utiliser temporary pour pouvoir changer facilement
       },
+      // Sur labo.kioskfy.com, le rewrite transforme /login -> /organization/login
       {
         source: "/",
         has: [
@@ -119,8 +121,8 @@ const nextConfig: NextConfig = {
             value: laboHost,
           },
         ],
-        destination: "/organization/login",
-        permanent: true,
+        destination: "/login",
+        permanent: false, // Utiliser temporary pour pouvoir changer facilement
       },
     ];
   },

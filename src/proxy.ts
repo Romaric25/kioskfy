@@ -58,8 +58,14 @@ export default async function proxy(request: NextRequest) {
     // ============================================
     // ============================================
     // Routes d'authentification partagées (prioritaire sur les redirections de sous-domaine)
+    // Routes d'authentification partagées
+    // Sur les sous-domaines, ces routes sont préfixées par le rewrite (/login -> /admin/login)
     const sharedAuthRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
-    if (sharedAuthRoutes.some(route => pathname.startsWith(route))) {
+    const adminAuthRoutes = ['/admin/login', '/admin/register', '/admin/forgot-password', '/admin/reset-password'];
+    const laboAuthRoutes = ['/organization/login', '/organization/register', '/organization/forgot-password', '/organization/reset-password'];
+
+    const allAuthRoutes = [...sharedAuthRoutes, ...adminAuthRoutes, ...laboAuthRoutes];
+    if (allAuthRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.next();
     }
 
@@ -74,20 +80,24 @@ export default async function proxy(request: NextRequest) {
     const adminAllowedPrefixes = ['/admin'];
 
     // Détection du sous-domaine labo
+    // Note: le rewrite transforme /:path* -> /organization/:path*
+    // Donc /login devient /organization/login, /dashboard devient /organization/dashboard
     if (hostnameWithoutPort === laboHost || subdomain === 'labo') {
         const isAllowedOnLabo = laboAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
         if (!isAllowedOnLabo && pathname !== '/') {
-            // Rediriger vers /organization/dashboard
-            return NextResponse.redirect(new URL('/organization/dashboard', request.url));
+            // Rediriger vers /dashboard (le rewrite ajoutera /organization)
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 
     // Détection du sous-domaine admin
+    // Note: le rewrite transforme /:path* -> /admin/:path*
+    // Donc /login devient /admin/login, /dashboard devient /admin/dashboard
     if (hostnameWithoutPort === adminHost || subdomain === 'admin') {
         const isAllowedOnAdmin = adminAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
         if (!isAllowedOnAdmin && pathname !== '/') {
-            // Rediriger vers /admin/dashboard
-            return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+            // Rediriger vers /dashboard (le rewrite ajoutera /admin)
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 
@@ -159,14 +169,22 @@ export default async function proxy(request: NextRequest) {
         if (!session) {
 
             // Eviter la boucle: ne pas rediriger si on est déjà sur la page de login admin
-            if (pathname.startsWith("/admin") || hostname === adminHost) {
-                const loginUrl = new URL(`/admin/login`, request.url);
+            if (pathname.startsWith("/admin") || hostnameWithoutPort === adminHost) {
+                // Sur admin.kioskfy.com, le rewrite transforme /login -> /admin/login
+                // Donc on redirige vers /login qui sera rewrité en /admin/login
+                const isOnAdminSubdomain = hostnameWithoutPort === adminHost;
+                const loginPath = isOnAdminSubdomain ? '/login' : '/admin/login';
+                const loginUrl = new URL(loginPath, request.url);
                 loginUrl.searchParams.set("redirect", pathname);
                 return NextResponse.redirect(loginUrl);
             }
             // Eviter la boucle: ne pas rediriger si on est déjà sur la page de login organization
-            if (pathname.startsWith("/organization") || hostname === laboHost) {
-                const loginUrl = new URL(`/organization/login`, request.url);
+            if (pathname.startsWith("/organization") || hostnameWithoutPort === laboHost) {
+                // Sur labo.kioskfy.com, le rewrite transforme /login -> /organization/login
+                // Donc on redirige vers /login qui sera rewrité en /organization/login
+                const isOnLaboSubdomain = hostnameWithoutPort === laboHost;
+                const loginPath = isOnLaboSubdomain ? '/login' : '/organization/login';
+                const loginUrl = new URL(loginPath, request.url);
                 loginUrl.searchParams.set("redirect", pathname);
                 return NextResponse.redirect(loginUrl);
             }

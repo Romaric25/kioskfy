@@ -5,7 +5,7 @@
   "redirects": [
     {
       "source": "/admin",
-      "destination": "https://admin.kioskfy.com",
+      "destination": "https://admin.kioskfy.com/",
       "permanent": true
     },
     {
@@ -15,7 +15,7 @@
     },
     {
       "source": "/organization",
-      "destination": "https://labo.kioskfy.com",
+      "destination": "https://labo.kioskfy.com/",
       "permanent": true
     },
     {

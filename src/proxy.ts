@@ -157,10 +157,6 @@ export default async function proxy(request: NextRequest) {
     if (isProtectedRoute) {
         // Pas connecté -> redirection login
         if (!session) {
-            // Si on est déjà sur une page de login, on laisse passer pour éviter la boucle
-            if (pathname.includes("/login")) {
-                return NextResponse.next();
-            }
 
             // Eviter la boucle: ne pas rediriger si on est déjà sur la page de login admin
             if (pathname.startsWith("/admin") || hostname === adminHost) {

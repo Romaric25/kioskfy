@@ -83,21 +83,10 @@ export default async function proxy(request: NextRequest) {
     // Note: le rewrite transforme /:path* -> /organization/:path*
     // Donc /login devient /organization/login, /dashboard devient /organization/dashboard
     if (hostnameWithoutPort === laboHost || subdomain === 'labo') {
-        // Si l'utilisateur visite /organization/* sur labo.kioskfy.com, 
-        // rediriger vers le path sans le préfixe pour éviter /organization/organization/*
-        if (pathname.startsWith('/organization')) {
-            const newPath = pathname.replace('/organization', '') || '/';
-            // /organization -> /login (qui devient /organization/login via rewrite)
-            // /organization/dashboard -> /dashboard (qui devient /organization/dashboard via rewrite)
-            if (newPath === '/' || newPath === '') {
-                return NextResponse.redirect(new URL('/login', request.url));
-            }
-            return NextResponse.redirect(new URL(newPath, request.url));
-        }
-
-        if (pathname !== '/' && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/forgot-password') && !pathname.startsWith('/reset-password') && !pathname.startsWith('/dashboard')) {
-            // Rediriger vers /login (le rewrite ajoutera /organization)
-            return NextResponse.redirect(new URL('/login', request.url));
+        const isAllowedOnLabo = laboAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
+        if (!isAllowedOnLabo && pathname !== '/') {
+            // Rediriger vers /dashboard (le rewrite ajoutera /organization)
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 
@@ -105,22 +94,10 @@ export default async function proxy(request: NextRequest) {
     // Note: le rewrite transforme /:path* -> /admin/:path*
     // Donc /login devient /admin/login, /dashboard devient /admin/dashboard
     if (hostnameWithoutPort === adminHost || subdomain === 'admin') {
-        // Si l'utilisateur visite /admin/* sur admin.kioskfy.com, 
-        // rediriger vers le path sans le préfixe pour éviter /admin/admin/*
-        if (pathname.startsWith('/admin')) {
-            const newPath = pathname.replace('/admin', '') || '/';
-            // /admin -> /login (qui devient /admin/login via rewrite)
-            // /admin/dashboard -> /dashboard (qui devient /admin/dashboard via rewrite)
-            // /admin/login -> /login (qui devient /admin/login via rewrite)
-            if (newPath === '/' || newPath === '') {
-                return NextResponse.redirect(new URL('/login', request.url));
-            }
-            return NextResponse.redirect(new URL(newPath, request.url));
-        }
-
-        if (pathname !== '/' && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/forgot-password') && !pathname.startsWith('/reset-password') && !pathname.startsWith('/dashboard')) {
-            // Rediriger vers /login (le rewrite ajoutera /admin)
-            return NextResponse.redirect(new URL('/login', request.url));
+        const isAllowedOnAdmin = adminAllowedPrefixes.some(prefix => pathname.startsWith(prefix));
+        if (!isAllowedOnAdmin && pathname !== '/') {
+            // Rediriger vers /dashboard (le rewrite ajoutera /admin)
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 

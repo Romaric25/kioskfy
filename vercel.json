@@ -1,28 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "kioskfy",
- 
-  "redirects": [
-    {
-      "source": "/admin",
-      "destination": "https://admin.kioskfy.com/",
-      "permanent": true
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "https://admin.kioskfy.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/organization",
-      "destination": "https://labo.kioskfy.com/",
-      "permanent": true
-    },
-    {
-      "source": "/organization/:path*",
-      "destination": "https://labo.kioskfy.com/:path*",
-      "permanent": true
-    }
-  ]
-
+  "name": "kioskfy"
 }
